@@ -221,7 +221,10 @@ const LSTAT=['New','Contacted','Converted','Lost'];
 const DAY=864e5;
 
 const S={leads:[],deals:[]};
-let db=null,ai=null,state='loading',canWrite=true,q='',aiSummary='',aiBusy=false;
+let db=null,ai=null,mcp=null,state='loading',canWrite=true,q='',aiSummary='',aiBusy=false;
+S.imported=[];
+const finder={busy:false,msg:'',auto:false,ran:false};
+try{finder.auto=localStorage.getItem('swaggeroo-inbox')==='1'}catch(e){}
 
 /* ---------- derived facts ---------- */
 const midnight=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
@@ -263,7 +266,7 @@ function pipeline(){
 function agentList(){
  const rush=S.deals.filter(isRush).length,fu=S.deals.filter(needsFollowUp).length;
  return [
-  {i:'search',n:'Lead Finder',d:'Finds and organizes new leads automatically',on:false,go:'agents',log:'Not connected. Needs your order form or inbox linked so new inquiries arrive here on their own.'},
+  {i:'search',n:'Lead Finder',d:'Finds and organizes new leads automatically',on:!!mcp,go:mcp?'leads':'agents',log:mcp?(finder.msg||(finder.auto?'Checks your Gmail for order form emails each time you open the CRM and adds them as leads.':'Reads order form emails from your Gmail and adds them as leads. Choose Check inbox on the Leads page to turn it on.')):'Not available in this view. Needs Gmail connected to Claude.'},
   {i:'deal',n:'Lead Scorer',d:'Ranks leads by fit, budget, and interest',on:true,go:'leads',log:S.leads.length+(S.leads.length===1?' lead':' leads')+' scored on quantity, budget, source, and contact details.'},
   {i:'mail',n:'Follow-Up Agent',d:'Writes personalized emails and messages',on:!!ai,go:'deals',log:ai?'Open any deal and choose Draft follow-up email. '+fu+' deals are waiting on a reply.':'Not available in this view.'},
   {i:'shake',n:'Deal Tracker',d:'Manages your pipeline and deal stages',on:true,go:'deals',log:rush+' rush or overdue, '+fu+' quotes with no reply in 3 days.'},
@@ -303,7 +306,8 @@ const V={
   '<section class="panel"><h2>Sales Pipeline</h2>'+pipeline()+'</section>';
  },
  leads(){
-  return head('Leads','Ranked by the Lead Scorer. Highest fit first.','<button class="btn" data-new-lead'+dis()+'>Add lead</button>')+
+  return head('Leads','Ranked by the Lead Scorer. Highest fit first.','<span class="acts">'+(mcp?'<button class="btn ghost" data-inbox'+(finder.busy||!editable()?' disabled':'')+'>'+(finder.busy?'Checking…':'Check inbox')+'</button>':'')+'<button class="btn" data-new-lead'+dis()+'>Add lead</button></span>')+
+  (finder.msg?'<p class="note" role="status">Lead Finder: '+esc(finder.msg)+'</p>':'')+
   '<section class="panel"><input class="field" id="leadSearch" type="search" placeholder="Search company, contact, or product" aria-label="Search leads" value="'+esc(q)+'">'+
    '<div class="scroll"><table><thead><tr><th>Company</th><th>Interest</th><th class="num">Qty</th><th>Source</th><th>Score</th><th>Status</th><th></th></tr></thead><tbody id="leadRows">'+leadRows()+'</tbody></table></div></section>';
  },
@@ -320,13 +324,14 @@ const V={
    ['New lead added','The Lead Scorer ranks it right away',1],
    ['Quote sent, no reply in 3 days','The deal gets a Follow up tag and shows on the calendar',1],
    ['In-hand date within 10 days','The deal gets a Rush tag, then Overdue once the date passes',1],
-   ['New order form submission','Create a lead from it automatically',0],
+   ['Order form email arrives in your Gmail','The Lead Finder adds it as a lead the next time you open the CRM',mcp&&finder.auto?1:2],
    ['11 months after delivery','Send a reorder reminder for annual events',0]];
   return head('Automations','Rules that run without you.')+
-  '<section class="panel"><div class="list">'+R.map(r=>'<div class="item"><div><b>When: '+r[0]+'</b><p>Then: '+r[1]+'</p></div>'+(r[2]?'<span class="pill done">Active</span>':'<span class="pill off">Not set up yet</span>')+'</div>').join('')+'</div></section>';
+  '<section class="panel"><div class="list">'+R.map(r=>'<div class="item"><div><b>When: '+r[0]+'</b><p>Then: '+r[1]+'</p></div>'+(r[2]===1?'<span class="pill done">Active</span>':r[2]===2?'<span class="pill warn">Run Check inbox once</span>':'<span class="pill off">Not set up yet</span>')+'</div>').join('')+'</div></section>';
  },
  agents(){
-  return head('AI Agents','Four agents work on your live data today. Two need an outside connection before they can run.')+
+  const on=agentList().filter(a=>a.on).length;
+  return head('AI Agents',on+' of 6 agents are working on your live data. The rest need an outside connection before they can run.')+
   '<section class="panel">'+agentCards(true)+'</section>';
  },
  calendar(){
@@ -403,7 +408,7 @@ dlg.addEventListener('submit',async e=>{
  e.preventDefault();if(!editing||!db)return;
  const o=editing.orig,isLead=editing.kind==='leads';
  const data=isLead?
-  {company:val('f-company'),contact:val('f-contact'),email:val('f-email'),phone:val('f-phone'),interest:val('f-interest'),qty:+val('f-qty')||0,budget:+val('f-budget')||0,source:val('f-source'),status:val('f-status'),notes:val('f-notes'),createdAt:o.createdAt||Date.now()}:
+  {company:val('f-company'),contact:val('f-contact'),email:val('f-email'),phone:val('f-phone'),interest:val('f-interest'),qty:+val('f-qty')||0,budget:+val('f-budget')||0,source:val('f-source'),status:val('f-status'),notes:val('f-notes'),createdAt:o.createdAt||Date.now(),inHand:o.inHand||''}:
   {company:val('f-company'),contact:val('f-contact'),email:val('f-email'),value:+val('f-value')||0,title:val('f-title'),cat:val('f-cat'),deco:val('f-deco'),inHand:val('f-inHand'),stage:+val('f-stage')||0,notes:val('f-notes'),createdAt:o.createdAt||Date.now()};
  if(!isLead){data.stageAt=(editing.id&&o.stage===data.stage&&o.stageAt)?o.stageAt:Date.now();if(o.leadId)data.leadId=o.leadId}
  const col=db.collection(editing.kind),lead=editing.fromLead;
@@ -434,6 +439,54 @@ dlg.addEventListener('click',async e=>{
  }
 });
 
+/* ---------- Lead Finder: order form emails -> leads ---------- */
+const CATMAP=[['Headwear','Headwear'],['Apparel','Apparel'],['Drinkware','Drinkware'],['Bags','Bags'],['Writing','Writing Instruments'],['Tech','Tech'],['Office','Office'],['Awards','Awards'],['Signage','Signage'],['Trade Show','Trade Show'],['Safety','Safety / PPE']];
+function parseOrder(body){
+ body=String(body||'').replace(/\r/g,'');
+ const one=k=>{const m=body.match(new RegExp('^\\s*'+k+':[ \\t]*(.*)$','mi'));return m?m[1].trim():''};
+ const all=k=>{const out=[],re=new RegExp('^\\s*'+k+':[ \\t]*(.*)$','gmi');let m;while((m=re.exec(body)))out.push(m[1].trim());return out};
+ const company=one('Company');
+ if(!company||!/ORDER REQUEST/i.test(body))return null;
+ const cats=all('Category'),qty=all('Quantity').reduce((t,x)=>t+(parseInt(x.replace(/[^0-9]/g,''),10)||0),0);
+ const hit=CATMAP.find(c=>(cats[0]||'').indexOf(c[0])>=0),bud=(one('Budget').replace(/,/g,'').match(/\d+(\.\d+)?/)||[0])[0];
+ const date=one('In-Hand Date'),ev=one('Event/Project'),desc=all('Description').filter(x=>x&&x!=='N/A'),deco=all('Decoration').filter(x=>x&&x!=='N/A');
+ const notes=[ev&&ev!=='N/A'?'Event: '+ev:'',date?'In-hand date: '+date:'',cats.length?'Items: '+cats.join('; '):'',desc.length?'Details: '+desc.join('; '):'',deco.length?'Decoration: '+deco.join('; '):''].filter(Boolean).join('\n');
+ return {company:company.slice(0,200),contact:one('Contact').slice(0,200),email:one('Email').slice(0,200),phone:one('Phone').slice(0,60),interest:hit?hit[1]:'Other',qty:qty,budget:+bud||0,source:'Order form',status:'New',notes:notes.slice(0,4000),inHand:/^\d{4}-\d{2}-\d{2}$/.test(date)?date:'',createdAt:Date.now()};
+}
+function inboxError(e){
+ const c=e&&e.code;
+ if(c==='needs_reauth')return 'Reconnect Gmail in claude.ai Settings → Connectors, then check again.';
+ if(c==='server_not_connected'||c==='selection_required'||c==='server_not_found')return 'Add Gmail in claude.ai Settings → Connectors, then check again.';
+ if(c==='blocked_by_policy')return 'Your organization does not allow Gmail on this page.';
+ if(c==='not_in_manifest'||c==='consent_required'||c==='approval_required'||c==='not_granted')return 'Gmail access was not allowed for this page. Choose Check inbox to try again.';
+ if(c==='server_unavailable'||c==='rate_limited')return 'Gmail did not answer. Try again in a minute.';
+ if(c==='tool_error')return 'Gmail reported a problem: '+(e.message||'unknown error');
+ return 'The inbox check did not finish. Try again.';
+}
+async function checkInbox(auto){
+ if(!mcp||!editable()||state!=='live'||finder.busy)return;
+ finder.busy=true;finder.msg='Checking your inbox for order requests…';render();
+ try{
+  const r=await mcp.callTool('Gmail','search_threads',{query:'subject:"Order Request" newer_than:90d',pageSize:25,view:'THREAD_VIEW_IDS_ONLY'},{cache:false});
+  const threads=(r&&r.payload&&r.payload.threads)||[],done=new Set(S.imported);let added=0;
+  for(const t of threads){
+   if(!t||!/^[A-Za-z0-9_-]{1,100}$/.test(t.id||'')||done.has(t.id))continue;
+   const g=await mcp.callTool('Gmail','get_thread',{threadId:t.id,messageFormat:'PLAIN_TEXT'},{cache:false});
+   const p=(g&&g.payload)||{},m=((p.messages)||(p.thread&&p.thread.messages)||[])[0];
+   const lead=m?parseOrder(m.plaintextBody||m.body||''):null;
+   if(lead){await db.collection('leads').doc('gm-'+t.id).set(lead);added++}
+   await db.collection('imported').doc(t.id).set({at:Date.now(),lead:!!lead});
+  }
+  finder.msg=(added?added+(added===1?' new order request added as a lead.':' new order requests added as leads.'):'No new order requests.')+' Last checked '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'.';
+  finder.auto=true;try{localStorage.setItem('swaggeroo-inbox','1')}catch(e){}
+ }catch(e){
+  finder.msg=inboxError(e);
+  if(auto){finder.auto=false;try{localStorage.removeItem('swaggeroo-inbox')}catch(x){}}
+ }
+ finder.busy=false;render();
+}
+function maybeAuto(){if(finder.auto&&!finder.ran&&mcp&&state==='live'&&editable()){finder.ran=true;checkInbox(true)}}
+
 /* ---------- page events ---------- */
 const view=$('view');
 view.addEventListener('click',async e=>{
@@ -446,8 +499,9 @@ view.addEventListener('click',async e=>{
  else if(d.editDeal)openDeal(d.editDeal);
  else if(d.move){const x=S.deals.find(x=>x.id===d.move);if(x&&x.stage<LAST)save(db.collection('deals').doc(x.id).update({stage:x.stage+1,stageAt:Date.now()}))}
  else if(d.convert){const l=S.leads.find(x=>x.id===d.convert);if(!l)return;
-  openDeal(null,{company:l.company,contact:l.contact,email:l.email,title:(l.qty?l.qty+' × ':'')+(l.interest||''),cat:l.interest,value:l.budget||'',stage:1,leadId:l.id,notes:l.notes});
+  openDeal(null,{company:l.company,contact:l.contact,email:l.email,title:(l.qty?l.qty+' × ':'')+(l.interest||''),cat:l.interest,inHand:l.inHand||'',value:l.budget||'',stage:1,leadId:l.id,notes:l.notes});
   editing.fromLead=l}
+ else if('inbox' in d)checkInbox(false);
  else if('summarize' in d){
   aiBusy=true;aiSummary='Reading your pipeline…';render();
   const rows=S.deals.map(x=>({company:x.company,order:x.title,value:+x.value||0,stage:STAGES[x.stage],product:x.cat,decoration:x.deco,inHand:x.inHand||null,daysInStage:x.stageAt?Math.floor((Date.now()-x.stageAt)/DAY):null}));
@@ -467,13 +521,14 @@ use('db').then(d=>{
  if(!d){state='nodb';render();return}
  db=d;const seen={};
  const timer=setTimeout(()=>{if(state==='loading'){state='slow';render()}},10000);
- ['leads','deals'].forEach(name=>db.collection(name).onSnapshot(snap=>{
-  S[name]=snap.docs.map(x=>Object.assign({},x.data(),{id:x.id}));
-  if(!snap.metadata||!snap.metadata.fromCache){seen[name]=1;if(seen.leads&&seen.deals&&state!=='error'){clearTimeout(timer);state='live'}}
-  render();
+ ['leads','deals','imported'].forEach(name=>db.collection(name).onSnapshot(snap=>{
+  S[name]=name==='imported'?snap.docs.map(x=>x.id):snap.docs.map(x=>Object.assign({},x.data(),{id:x.id}));
+  if(!snap.metadata||!snap.metadata.fromCache){seen[name]=1;if(seen.leads&&seen.deals&&seen.imported&&state!=='error'){clearTimeout(timer);state='live'}}
+  render();maybeAuto();
  },()=>{clearTimeout(timer);state='error';render()}));
 });
 use('sample').then(s=>{if(s){ai=s;render()}});
+use('mcp').then(m=>{if(m){mcp=m;render();maybeAuto()}});
 use('user').then(u=>{if(u&&u.can)Promise.resolve(u.can('data.write')).then(v=>{if(v===false){canWrite=false;render()}}).catch(()=>{})});
 })();
 </script>
