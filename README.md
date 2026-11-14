@@ -35,7 +35,7 @@ Run the tests with `npm test`.
 
 | Variable | Purpose |
 |---|---|
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Creates the first admin account when the database has none. Password must be 10+ characters. Add more people in Settings → Team |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Creates the admin account on first start. Changing `ADMIN_PASSWORD` later resets that account's password on the next restart. Password must be 10+ characters. Add more people in Settings → Team |
 | `DATA_DIR` | Folder for the database file. Must be on a disk that survives restarts |
 | `PORT` | Port to listen on (default 3000) |
 | `NODE_ENV=production` | Marks the login cookie Secure. Set this whenever the site is served over HTTPS |

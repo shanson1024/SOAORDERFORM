@@ -58,15 +58,32 @@ function createUser(email, name, password, role) {
     .run(id, email.toLowerCase().trim(), String(name || '').slice(0, 120), hashPassword(password), role === 'admin' ? 'admin' : 'member', Date.now());
   return id;
 }
-if (!db.prepare('SELECT COUNT(*) AS n FROM users').get().n) {
+// The admin account follows ADMIN_EMAIL / ADMIN_PASSWORD. It is created on first start, and its
+// password is reset whenever ADMIN_PASSWORD changes. A password changed in Settings is kept
+// until the variable itself is changed again.
+db.exec('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)');
+(function syncAdmin() {
   const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
-  if (ADMIN_EMAIL && ADMIN_PASSWORD && validEmail(ADMIN_EMAIL) && ADMIN_PASSWORD.length >= 10) {
-    createUser(ADMIN_EMAIL, 'Admin', ADMIN_PASSWORD, 'admin');
-    console.log(`Created admin account for ${ADMIN_EMAIL}`);
-  } else {
-    console.warn('No accounts exist. Set ADMIN_EMAIL and ADMIN_PASSWORD (10+ characters) and restart to create the first one.');
+  const usable = ADMIN_EMAIL && ADMIN_PASSWORD && validEmail(ADMIN_EMAIL) && ADMIN_PASSWORD.length >= 10;
+  const count = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
+  if (!usable) {
+    if (!count) console.warn('No accounts exist. Set ADMIN_EMAIL and ADMIN_PASSWORD (10+ characters) and restart to create the first one.');
+    return;
   }
-}
+  const email = ADMIN_EMAIL.toLowerCase().trim();
+  const marker = db.prepare("SELECT value FROM meta WHERE key = 'admin_password_applied'").get();
+  if (marker && checkPassword(ADMIN_PASSWORD, marker.value)) return; // variable unchanged since last applied
+  const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  if (user) {
+    db.prepare("UPDATE users SET pass_hash = ?, role = 'admin' WHERE id = ?").run(hashPassword(ADMIN_PASSWORD), user.id);
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(user.id);
+    console.log(`Password updated for ${email} from ADMIN_PASSWORD`);
+  } else {
+    createUser(email, 'Admin', ADMIN_PASSWORD, 'admin');
+    console.log(`Created admin account for ${email}`);
+  }
+  db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('admin_password_applied', ?)").run(hashPassword(ADMIN_PASSWORD));
+})();
 
 function cookies(req) {
   const out = {};
