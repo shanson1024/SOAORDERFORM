@@ -163,6 +163,8 @@ td.acts .btn{margin-left:6px}
 .pill.off{background:transparent;border:1px solid var(--line);color:var(--ink-3)}
 .agent.off .state{color:var(--ink-3)}
 .kpi em{color:var(--ink-2);font-weight:500}
+.sel{user-select:all;color:var(--blue-soft) !important;overflow-wrap:anywhere}
+.form.f3{grid-template-columns:repeat(2,minmax(0,1fr)) auto}
 .aiout{white-space:pre-wrap;color:var(--ink-2);line-height:1.6}
 dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line-hi);border-radius:16px;padding:22px;width:min(600px,calc(100vw - 32px));max-height:calc(100% - 32px);box-shadow:0 0 60px rgba(47,107,255,.35)}
 dialog::backdrop{background:rgba(2,6,15,.72)}
@@ -174,7 +176,8 @@ textarea.field{resize:vertical;font:inherit;color:inherit}
 .draft{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
 .draft .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--panel-2);border:1px solid var(--line-hi);border-radius:10px;padding:10px 16px;z-index:50;max-width:calc(100vw - 32px)}
-@media (max-width:560px){.grid2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1000px){.form.f3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.grid2,.form.f3{grid-template-columns:minmax(0,1fr)}}
 </style>
 <div class="app">
   <aside class="rail">
@@ -221,7 +224,7 @@ const LSTAT=['New','Contacted','Converted','Lost'];
 const DAY=864e5;
 
 const S={leads:[],deals:[]};
-let db=null,ai=null,mcp=null,state='loading',canWrite=true,q='',aiSummary='',aiBusy=false;
+let app=null,team=null,db=null,ai=null,mcp=null,state='loading',canWrite=true,q='',aiSummary='',aiBusy=false;
 S.imported=[];
 const finder={busy:false,msg:'',auto:false,ran:false};
 try{finder.auto=localStorage.getItem('swaggeroo-inbox')==='1'}catch(e){}
@@ -266,7 +269,7 @@ function pipeline(){
 function agentList(){
  const rush=S.deals.filter(isRush).length,fu=S.deals.filter(needsFollowUp).length;
  return [
-  {i:'search',n:'Lead Finder',d:'Finds and organizes new leads automatically',on:!!mcp,go:mcp?'leads':'agents',log:mcp?(finder.msg||(finder.auto?'Checks your Gmail for order form emails each time you open the CRM and adds them as leads.':'Reads order form emails from your Gmail and adds them as leads. Choose Check inbox on the Leads page to turn it on.')):'Not available in this view. Needs Gmail connected to Claude.'},
+  {i:'search',n:'Lead Finder',d:'Finds and organizes new leads automatically',on:!!(mcp||app),go:mcp||app?'leads':'agents',log:app?'Order form submissions arrive here as scored leads the moment a customer sends them.':mcp?(finder.msg||(finder.auto?'Checks your Gmail for order form emails each time you open the CRM and adds them as leads.':'Reads order form emails from your Gmail and adds them as leads. Choose Check inbox on the Leads page to turn it on.')):'Not available in this view. Needs Gmail connected to Claude.'},
   {i:'deal',n:'Lead Scorer',d:'Ranks leads by fit, budget, and interest',on:true,go:'leads',log:S.leads.length+(S.leads.length===1?' lead':' leads')+' scored on quantity, budget, source, and contact details.'},
   {i:'mail',n:'Follow-Up Agent',d:'Writes personalized emails and messages',on:!!ai,go:'deals',log:ai?'Open any deal and choose Draft follow-up email. '+fu+' deals are waiting on a reply.':'Not available in this view.'},
   {i:'shake',n:'Deal Tracker',d:'Manages your pipeline and deal stages',on:true,go:'deals',log:rush+' rush or overdue, '+fu+' quotes with no reply in 3 days.'},
@@ -324,7 +327,7 @@ const V={
    ['New lead added','The Lead Scorer ranks it right away',1],
    ['Quote sent, no reply in 3 days','The deal gets a Follow up tag and shows on the calendar',1],
    ['In-hand date within 10 days','The deal gets a Rush tag, then Overdue once the date passes',1],
-   ['Order form email arrives in your Gmail','The Lead Finder adds it as a lead the next time you open the CRM',mcp&&finder.auto?1:2],
+   app?['Customer submits the order form','A scored lead appears here right away',1]:['Order form email arrives in your Gmail','The Lead Finder adds it as a lead the next time you open the CRM',mcp&&finder.auto?1:2],
    ['11 months after delivery','Send a reorder reminder for annual events',0]];
   return head('Automations','Rules that run without you.')+
   '<section class="panel"><div class="list">'+R.map(r=>'<div class="item"><div><b>When: '+r[0]+'</b><p>Then: '+r[1]+'</p></div>'+(r[2]===1?'<span class="pill done">Active</span>':r[2]===2?'<span class="pill warn">Run Check inbox once</span>':'<span class="pill off">Not set up yet</span>')+'</div>').join('')+'</div></section>';
@@ -354,8 +357,13 @@ const V={
   '<section class="panel"><div class="list">'+
    '<div class="item"><div><b>Business</b><p>Swaggeroo · Promotional products and branded merchandise</p></div></div>'+
    '<div class="item"><div><b>Pipeline stages</b><p>'+STAGES.join(' → ')+'</p></div></div>'+
-   '<div class="item"><div><b>Your data</b><p>'+S.leads.length+' leads and '+S.deals.length+' deals, saved with this page as you work. People you share the page with see the same records. Contributors and editors can change them; viewers can only read.</p></div></div>'+
-  '</div></section>';
+   '<div class="item"><div><b>Your data</b><p>'+S.leads.length+(S.leads.length===1?' lead':' leads')+' and '+S.deals.length+(S.deals.length===1?' deal':' deals')+', '+(app?'stored in your CRM database. Everyone on your team sees the same records.':'saved with this page as you work. People you share the page with see the same records. Contributors and editors can change them; viewers can only read.')+'</p></div></div>'+
+   (app?'<div class="item"><div><b>Order form link</b><p>Send customers here. Each submission becomes a lead.</p><p class="sel">'+esc(app.orderFormUrl)+'</p></div><button class="btn ghost" data-copy-url>Copy link</button></div>'+
+    '<div class="item"><div><b>Signed in as '+esc(app.me.email)+'</b><p>'+(app.me.role==='admin'?'Admin':'Team member')+'</p></div><button class="btn ghost" data-logout>Sign out</button></div>':'')+
+  '</div></section>'+
+  (app?'<section class="panel"><h2>Change password</h2><form class="form f3" data-form="pass"><label>Current password<input class="field" id="p-cur" type="password" autocomplete="current-password" required></label><label>New password (10+ characters)<input class="field" id="p-new" type="password" autocomplete="new-password" minlength="10" required></label><button class="btn" type="submit">Update</button></form></section>':'')+
+  (app&&app.me.role==='admin'?'<section class="panel"><h2>Team</h2><div class="list">'+(team?team.map(u=>'<div class="item"><div><b>'+esc(u.name||u.email)+'</b><p>'+esc(u.email)+' · '+(u.role==='admin'?'Admin':'Team member')+'</p></div>'+(u.id===app.me.id?'<span class="pill">You</span>':'<button class="btn ghost danger" data-rm-user="'+esc(u.id)+'">Remove</button>')+'</div>').join(''):'<p class="note">Loading team…</p>')+'</div>'+
+   '<form class="form" data-form="user"><label>Name<input class="field" id="u-name" required></label><label>Email<input class="field" id="u-email" type="email" required></label><label>Password (10+ characters)<input class="field" id="u-pass" type="password" autocomplete="new-password" minlength="10" required></label><label>Role<select class="field" id="u-role"><option value="member">Team member</option><option value="admin">Admin</option></select></label><button class="btn" type="submit">Add person</button></form></section>':'');
  }
 };
 function current(){const h=location.hash.slice(1);return V[h]?h:'dashboard'}
@@ -502,6 +510,13 @@ view.addEventListener('click',async e=>{
   openDeal(null,{company:l.company,contact:l.contact,email:l.email,title:(l.qty?l.qty+' × ':'')+(l.interest||''),cat:l.interest,inHand:l.inHand||'',value:l.budget||'',stage:1,leadId:l.id,notes:l.notes});
   editing.fromLead=l}
  else if('inbox' in d)checkInbox(false);
+ else if('logout' in d)app.logout().catch(()=>toast('Sign out failed. Try again.'));
+ else if('copyUrl' in d){try{await navigator.clipboard.writeText(app.orderFormUrl);toast('Link copied')}catch(err){toast('Select the link and copy it.')}}
+ else if(d.rmUser){
+  if(!t.dataset.armed){t.dataset.armed='1';t.textContent='Confirm remove';return}
+  try{await app.users.remove(d.rmUser);toast('Removed')}catch(err){toast(err.message||'That person was not removed.')}
+  loadTeam();
+ }
  else if('summarize' in d){
   aiBusy=true;aiSummary='Reading your pipeline…';render();
   const rows=S.deals.map(x=>({company:x.company,order:x.title,value:+x.value||0,stage:STAGES[x.stage],product:x.cat,decoration:x.deco,inHand:x.inHand||null,daysInStage:x.stageAt?Math.floor((Date.now()-x.stageAt)/DAY):null}));
@@ -511,6 +526,14 @@ view.addEventListener('click',async e=>{
   aiBusy=false;render();
  }
 });
+view.addEventListener('submit',async e=>{
+ e.preventDefault();const f=e.target.dataset.form;if(!app||!f)return;
+ try{
+  if(f==='pass'){await app.changePassword($('p-cur').value,$('p-new').value);toast('Password updated');render()}
+  else if(f==='user'){await app.users.add({name:$('u-name').value.trim(),email:$('u-email').value.trim(),password:$('u-pass').value,role:$('u-role').value});toast('Added');loadTeam()}
+ }catch(err){toast(err.message||'That did not save. Try again.')}
+});
+function loadTeam(){if(app&&app.me.role==='admin')app.users.list().then(u=>{team=u;if(current()==='workspace')render()}).catch(()=>{})}
 view.addEventListener('input',e=>{if(e.target.id==='leadSearch'){q=e.target.value;$('leadRows').innerHTML=leadRows()}});
 window.addEventListener('hashchange',render);
 
@@ -528,6 +551,7 @@ use('db').then(d=>{
  },()=>{clearTimeout(timer);state='error';render()}));
 });
 use('sample').then(s=>{if(s){ai=s;render()}});
+use('app').then(a=>{if(a){app=a;render();loadTeam()}});
 use('mcp').then(m=>{if(m){mcp=m;render();maybeAuto()}});
 use('user').then(u=>{if(u&&u.can)Promise.resolve(u.can('data.write')).then(v=>{if(v===false){canWrite=false;render()}}).catch(()=>{})});
 })();

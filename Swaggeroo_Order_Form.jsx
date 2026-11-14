@@ -284,7 +284,7 @@ export default function PromoOrderForm() {
     setSending(true);
     const subject = encodeURIComponent(`Order Request: ${form.companyName} — ${form.eventName || "New Order"}`);
     const body = encodeURIComponent(buildEmailBody());
-    const mailtoLink = `mailto:sah@hireprecise.com?subject=${subject}&body=${body}`;
+    const mailtoLink = `mailto:sh@swaggeroo.com?subject=${subject}&body=${body}`;
     window.open(mailtoLink, "_blank");
     setTimeout(() => {
       setSending(false);

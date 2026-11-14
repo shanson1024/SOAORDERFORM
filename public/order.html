@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swaggeroo Order Form</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap">
+<style>
+:root{--navy:#0A1628;--blue:#1B4D7A;--accent:#E8913A;--light:#F4F7FA;--border:#D1D9E6;--text:#1A2332;--muted:#6B7A8D;--error:#C0392B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--light);color:var(--text);font:14px/1.45 'DM Sans',system-ui,sans-serif}
+header{background:linear-gradient(160deg,var(--navy),var(--blue));padding:40px 24px 56px;text-align:center;color:#fff}
+header img{width:260px;max-width:80vw;height:auto}
+h1{font:400 32px 'DM Serif Display',Georgia,serif;margin:12px 0 8px;text-wrap:balance}
+header p{margin:0;color:rgba(255,255,255,.7)}
+main{max-width:720px;margin:-28px auto 40px;padding:0 16px;display:flex;flex-direction:column;gap:16px}
+section{background:#fff;border-radius:12px;padding:26px;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:14px}
+h2{font-size:17px;margin:0 0 4px;color:var(--navy);display:flex;align-items:center;gap:10px}
+h2 span{width:28px;height:28px;border-radius:6px;background:var(--accent);color:#fff;display:inline-grid;place-items:center;font-size:13px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.g4{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:14px 12px}
+label{font-size:13px;font-weight:600;display:block;min-width:0}
+label>input,label>select,label>textarea{display:block;margin-top:5px}
+.sizes label>input{margin-top:0}
+label i{color:var(--accent);font-style:normal}
+input,select,textarea{font:inherit;font-weight:400;color:var(--text);width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:6px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+.bad{border-color:var(--error)}
+.item{border:1.5px solid var(--border);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.item header{all:unset;display:flex;justify-content:space-between;align-items:center}
+.item header b{color:var(--blue)}
+.link{background:none;border:0;color:var(--error);font:inherit;font-weight:600;cursor:pointer}
+.sizes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.sizes label{flex-direction:row;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sizes input{padding:6px 8px;text-align:center}
+.add{padding:12px;background:none;border:2px dashed var(--border);border-radius:8px;color:var(--blue);font:inherit;font-weight:600;cursor:pointer}
+.add:hover{border-color:var(--blue);background:#F0F5FA}
+.submit{padding:16px;border:0;border-radius:10px;color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--accent),#D17A2A);box-shadow:0 4px 20px rgba(232,145,58,.35)}
+.submit:disabled{background:var(--muted);box-shadow:none;cursor:wait}
+button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+#err{color:var(--error);font-weight:600;margin:0}
+.fine{text-align:center;font-size:12px;color:var(--muted);margin:0}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+#done{text-align:center;align-items:center;padding:48px 28px}
+#done .ok{width:72px;height:72px;border-radius:50%;background:#E8F5E9;display:grid;place-items:center;font-size:36px;color:#2D8A56}
+#done h2{font:400 26px 'DM Serif Display',Georgia,serif}
+[hidden]{display:none!important}
+@media (max-width:560px){.g2,.g4{grid-template-columns:minmax(0,1fr)}h1{font-size:26px}section{padding:20px}}
+</style>
+</head>
+<body>
+<header>
+  <img src="/logo.webp" alt="Swaggeroo" width="460" height="106">
+  <h1>Promotional Products Order Form</h1>
+  <p>Complete the form below and we'll prepare your quote within 1 business day.</p>
+</header>
+<main>
+<form id="form" novalidate style="display:contents">
+  <section>
+    <h2><span>1</span>Customer Information</h2>
+    <div class="g2">
+      <label>Company Name <i>*</i><input id="companyName" required placeholder="Acme Corp" autocomplete="organization"></label>
+      <label>Contact Name <i>*</i><input id="contactName" required placeholder="John Smith" autocomplete="name"></label>
+      <label>Email <i>*</i><input id="contactEmail" type="email" required placeholder="john@acmecorp.com" autocomplete="email"></label>
+      <label>Phone <i>*</i><input id="contactPhone" type="tel" required placeholder="(555) 123-4567" autocomplete="tel"></label>
+    </div>
+    <div class="g4">
+      <label>Shipping Address<input id="shippingAddress" placeholder="123 Main St" autocomplete="street-address"></label>
+      <label>City<input id="city" placeholder="Atlanta"></label>
+      <label>State<input id="state" placeholder="GA" maxlength="2"></label>
+      <label>ZIP<input id="zip" placeholder="30301" maxlength="10"></label>
+    </div>
+    <label class="hp" aria-hidden="true">Website<input id="website" tabindex="-1" autocomplete="off"></label>
+  </section>
+  <section>
+    <h2><span>2</span>Order Details</h2>
+    <div class="g2">
+      <label>Event / Project Name<input id="eventName" placeholder="Q2 Trade Show, Company Picnic, etc."></label>
+      <label>In-Hand Date <i>*</i><input id="inHandDate" type="date" required></label>
+      <label>Budget<input id="budget" placeholder="$500 - $2,000 or per-unit target"></label>
+      <label>Artwork Ready?<select id="artworkReady"><option value="">Select...</option><option>Yes — vector files ready</option><option>Yes — but needs cleanup</option><option>No — need design help</option><option>Not sure</option></select></label>
+    </div>
+  </section>
+  <section>
+    <h2><span>3</span>Products Requested</h2>
+    <div id="items" style="display:flex;flex-direction:column;gap:14px"></div>
+    <button class="add" type="button" id="addItem">+ Add Another Item</button>
+  </section>
+  <section>
+    <h2><span>4</span>Additional Notes</h2>
+    <label>Special Instructions or Notes<textarea id="notes" rows="4" placeholder="Any special requirements, packaging needs, delivery instructions, etc."></textarea></label>
+  </section>
+  <p id="err" role="alert" hidden></p>
+  <button class="submit" id="send" type="submit">Submit Order Request</button>
+  <p class="fine">Your request goes straight to our team. We'll respond within 1 business day with a quote.</p>
+</form>
+<section id="done" hidden>
+  <div class="ok">✓</div>
+  <h2>Order request received</h2>
+  <p>Thanks. Your request for <b id="doneCo"></b> is with our team, and we'll follow up within 1 business day.</p>
+  <button class="add" type="button" id="again">Submit another order</button>
+</section>
+<p class="fine">Swaggeroo — Promotional Products &amp; Branded Merchandise</p>
+</main>
+
+<template id="itemT">
+  <div class="item">
+    <header><b class="n"></b><button class="link rm" type="button">Remove</button></header>
+    <div class="g2">
+      <label>Product Category <i>*</i><select class="category" required><option value="">Select category...</option></select></label>
+      <label>Total Quantity <i>*</i><input class="quantity" type="number" min="1" required placeholder="100"></label>
+    </div>
+    <label>Product Description / Specific Item<input class="description" placeholder="e.g., Gildan 5000 tee, YETI Rambler 20oz, etc."></label>
+    <div class="g2">
+      <label>Color(s)<input class="color" placeholder="Navy, Black, White"></label>
+      <label>Target Unit Price<input class="targetPrice" placeholder="$8.50"></label>
+    </div>
+    <div class="sizewrap" hidden>
+      <label style="margin-bottom:8px">Size Breakdown</label>
+      <div class="sizes"></div>
+    </div>
+    <div class="g2">
+      <label>Decoration Method<select class="decoration"><option value="">Select method...</option></select></label>
+      <label>Decoration Notes<input class="decorationNotes" placeholder="Logo placement, # of colors, etc."></label>
+    </div>
+  </div>
+</template>
+
+<script>
+const CATEGORIES = ['Apparel - T-Shirts','Apparel - Polos','Apparel - Jackets/Outerwear','Apparel - Headwear/Caps','Drinkware - Mugs/Tumblers','Drinkware - Water Bottles','Bags - Tote/Drawstring','Bags - Backpacks','Writing Instruments','Tech - USB/Power Banks','Tech - Phone Accessories','Office/Desk Items','Awards/Recognition','Signage/Banners','Trade Show/Event Items','Safety/PPE','Other'];
+const DECORATIONS = ['Screen Print','Embroidery','Heat Transfer','Sublimation','Laser Engrave','Deboss / Emboss','Direct-to-Film (DTF)','Pad Print','Other'];
+const SIZES = ['XS','S','M','L','XL','2XL','3XL','4XL'];
+const FIELDS = ['companyName','contactName','contactEmail','contactPhone','shippingAddress','city','state','zip','eventName','inHandDate','budget','artworkReady','notes','website'];
+const $ = id => document.getElementById(id);
+const items = $('items');
+
+function renumber() {
+  [...items.children].forEach((el, i) => { el.querySelector('.n').textContent = 'Item ' + (i + 1); el.querySelector('.rm').hidden = items.children.length < 2; });
+}
+function addItem() {
+  const el = $('itemT').content.firstElementChild.cloneNode(true);
+  CATEGORIES.forEach(c => el.querySelector('.category').add(new Option(c)));
+  DECORATIONS.forEach(d => el.querySelector('.decoration').add(new Option(d)));
+  SIZES.forEach(s => { const l = document.createElement('label'); l.append(s); const i = document.createElement('input'); i.type = 'number'; i.min = '0'; i.placeholder = '0'; i.dataset.size = s; l.append(i); el.querySelector('.sizes').append(l); });
+  el.querySelector('.category').addEventListener('change', e => { el.querySelector('.sizewrap').hidden = !e.target.value.includes('Apparel'); });
+  el.querySelector('.rm').addEventListener('click', () => { el.remove(); renumber(); });
+  items.append(el); renumber();
+}
+$('addItem').addEventListener('click', addItem);
+addItem();
+
+function mark(el, bad) { el.classList.toggle('bad', bad); return bad; }
+$('form').addEventListener('input', e => e.target.classList.remove('bad'));
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = $('err'), send = $('send');
+  const data = {}; FIELDS.forEach(f => { data[f] = $(f).value.trim(); });
+  let bad = false;
+  ['companyName','contactName','contactPhone','inHandDate'].forEach(f => { bad = mark($(f), !data[f]) || bad; });
+  bad = mark($('contactEmail'), !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contactEmail)) || bad;
+  data.items = [...items.children].map(el => {
+    const g = c => el.querySelector('.' + c).value.trim(), sizes = {};
+    el.querySelectorAll('[data-size]').forEach(i => { if (+i.value > 0) sizes[i.dataset.size] = i.value; });
+    bad = mark(el.querySelector('.category'), !g('category')) || bad;
+    bad = mark(el.querySelector('.quantity'), !(+g('quantity') > 0)) || bad;
+    return { category: g('category'), quantity: g('quantity'), description: g('description'), color: g('color'), targetPrice: g('targetPrice'), decoration: g('decoration'), decorationNotes: g('decorationNotes'), sizes };
+  });
+  if (bad) { err.textContent = 'Fill in the highlighted fields, then submit again.'; err.hidden = false; document.querySelector('.bad').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  err.hidden = true; send.disabled = true; send.textContent = 'Sending…';
+  try {
+    const r = await fetch('/api/order-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Your request was not sent. Please try again.');
+    $('doneCo').textContent = data.companyName; $('form').hidden = true; $('done').hidden = false; window.scrollTo({ top: 0 });
+  } catch (x) { err.textContent = x.message === 'Failed to fetch' ? 'We could not reach the server. Check your connection and try again.' : x.message; err.hidden = false; }
+  send.disabled = false; send.textContent = 'Submit Order Request';
+});
+$('again').addEventListener('click', () => { $('form').reset(); items.innerHTML = ''; addItem(); $('done').hidden = true; $('form').hidden = false; });
+</script>
+</body>
+</html>
