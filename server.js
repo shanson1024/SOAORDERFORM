@@ -13,6 +13,9 @@ const SESSION_DAYS = 30;
 const DAY = 864e5;
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
+if (process.env.RAILWAY_ENVIRONMENT && !process.env.RAILWAY_VOLUME_MOUNT_PATH) {
+  console.warn('WARNING: no Railway volume is attached. Records will be lost on the next deploy. Attach a volume mounted at ' + DATA_DIR + '.');
+}
 const db = new Database(path.join(DATA_DIR, 'swaggeroo.db'));
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');

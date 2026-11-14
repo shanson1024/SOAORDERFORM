@@ -41,7 +41,19 @@ Run the tests with `npm test`.
 | `NODE_ENV=production` | Marks the login cookie Secure. Set this whenever the site is served over HTTPS |
 | `ANTHROPIC_API_KEY` | Optional. Enables "Draft follow-up email" and "Summarize my pipeline" |
 
-## Deploy
+## Deploy on Railway
+
+`railway.json` tells Railway to build the Dockerfile and health-check `/api/health`.
+
+1. In Railway: New Project → Deploy from GitHub repo → pick this repo and the branch to deploy.
+2. On the service, open Variables and add `ADMIN_EMAIL` and `ADMIN_PASSWORD` (10+ characters). Add `ANTHROPIC_API_KEY` if you want the AI features.
+3. Right-click the service → Attach Volume, with mount path `/data`. Do this before adding real records.
+4. Settings → Networking → Generate Domain (or add a custom domain such as `crm.swaggeroo.com`).
+5. Open the domain, sign in, and send customers to `/order`.
+
+The deploy log prints a warning if no volume is attached.
+
+## Deploy anywhere else
 
 Any host that runs a Docker container or a Node process with a persistent disk works.
 
