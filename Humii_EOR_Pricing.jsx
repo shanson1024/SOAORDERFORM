@@ -106,7 +106,7 @@ const longDate = d => d.toLocaleDateString("en-US", { year: "numeric", month: "l
 
 // Prospect-facing pricing exhibit. Shows pricing only: no internal margin
 // metrics, no editing controls. Prints as a clean document.
-function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy, validDays, onBack }) {
+function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy, validDays, reference, onBack }) {
   const today = new Date();
   const expires = new Date(today.getTime() + validDays * 86400000);
   const wcDesc = code => {
@@ -115,16 +115,16 @@ function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy,
   };
   const meta = [
     ["Prepared for", client || "Prospective client"],
+    ["Exhibit reference", reference || "Not assigned"],
     ["Date", longDate(today)],
     ["Pricing valid through", longDate(expires)],
     ["Prepared by", preparedBy || "Humii"],
-    ["Primary state", state || "Not specified"],
     ["Fee structure", feeModel === "percent" ? "Percentage of gross payroll" : "Per employee per month"],
   ];
   const cell = { padding: "7px 0", borderTop: `1px solid ${C.border}` };
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", fontFamily: FONT, color: C.ink, padding: "24px 16px" }}>
-      <style>{`@media print { .no-print { display: none !important; } .exhibit-page { border: none !important; padding: 0 !important; } body { background: #fff; } }`}</style>
+    <div className="exhibit-root" style={{ background: C.bg, minHeight: "100vh", fontFamily: FONT, color: C.ink, padding: "24px 16px" }}>
+      <style>{`@media print { .no-print { display: none !important; } .exhibit-page { border: none !important; padding: 0 !important; } .exhibit-root { background: #fff !important; padding: 0 !important; } } @page { margin: 0.6in; }`}</style>
       <div style={{ maxWidth: 820, margin: "0 auto" }}>
         <div className="no-print" style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
           <button type="button" onClick={onBack} style={{ border: `1.5px solid ${C.border}`, background: C.white, color: C.ink, fontWeight: 600, fontFamily: FONT, fontSize: 14, padding: "10px 18px", borderRadius: 6, cursor: "pointer" }}>
@@ -197,13 +197,26 @@ function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy,
             <li>Employee benefit plan costs are not included in this exhibit.</li>
           </ul>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 32, marginTop: 44 }}>
-            {[client || "Client", "Humii"].map(party => (
-              <div key={party} style={{ fontSize: 12, color: C.muted }}>
-                <div style={{ borderTop: `1px solid ${C.ink}`, paddingTop: 6 }}>Accepted by, {party}</div>
-                <div style={{ marginTop: 26, borderTop: `1px solid ${C.border}`, paddingTop: 6 }}>Name, title and date</div>
-              </div>
-            ))}
+          <div className="signature-block" style={{ marginTop: 28, breakInside: "avoid", pageBreakInside: "avoid" }}>
+            <h2 style={h2}>Acceptance</h2>
+            <p style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 8px" }}>
+              By signing below, {client || "Client"} and Humii agree to the pricing set out in this Exhibit A, which forms
+              part of the Employer of Record services agreement between them. This pricing is valid if signed on or
+              before {longDate(expires)}.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "0 40px" }}>
+              {[client || "Client", "Humii"].map(party => (
+                <div key={party}>
+                  <div style={{ fontSize: 14, fontWeight: 700, marginTop: 14 }}>{party}</div>
+                  {["Signature", "Printed name", "Title", "Date"].map(f => (
+                    <div key={f}>
+                      <div style={{ borderBottom: `1px solid ${C.ink}`, height: f === "Signature" ? 44 : 30 }} />
+                      <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: 0.6, paddingTop: 3 }}>{f}</div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -219,6 +232,7 @@ export default function HumiiEorPricing({ rateCard = RATE_CARD }) {
   const [addOnIds, setAddOnIds] = useState([]);
   const [preparedBy, setPreparedBy] = useState("");
   const [validDays, setValidDays] = useState(30);
+  const [reference, setReference] = useState(() => `EOR-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`);
   const [view, setView] = useState("builder");
 
   const quote = useMemo(
@@ -234,7 +248,7 @@ export default function HumiiEorPricing({ rateCard = RATE_CARD }) {
     return (
       <Exhibit
         quote={quote} rateCard={rateCard} client={client} state={state} feeModel={feeModel} groups={groups}
-        preparedBy={preparedBy} validDays={Number(validDays) > 0 ? Number(validDays) : 30} onBack={() => setView("builder")}
+        preparedBy={preparedBy} reference={reference} validDays={Number(validDays) > 0 ? Number(validDays) : 30} onBack={() => setView("builder")}
       />
     );
   }
@@ -275,6 +289,10 @@ export default function HumiiEorPricing({ rateCard = RATE_CARD }) {
             <div>
               <label style={labelStyle}>Prepared by</label>
               <input style={field} value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Rep name" />
+            </div>
+            <div>
+              <label style={labelStyle}>Exhibit reference</label>
+              <input style={field} value={reference} onChange={e => setReference(e.target.value)} />
             </div>
             <div>
               <label style={labelStyle}>Quote valid for (days)</label>
@@ -412,7 +430,7 @@ export default function HumiiEorPricing({ rateCard = RATE_CARD }) {
                 onClick={() => setView("exhibit")}
                 style={{ marginTop: 16, border: "none", background: C.primary, color: C.white, fontWeight: 700, fontFamily: FONT, fontSize: 14, padding: "11px 22px", borderRadius: 6, cursor: "pointer" }}
               >
-                Create prospect exhibit
+                Create client exhibit for signature
               </button>
             </>
           )}
