@@ -1,5 +1,5 @@
-// Humii PEO pricing engine: the rate card and the quote math, with no UI.
-// The UI lives in Humii_PEO_Pricing.jsx.
+// Humii EOR pricing engine: the rate card and the quote math, with no UI.
+// The UI lives in Humii_EOR_Pricing.jsx.
 
 // ---------------------------------------------------------------------------
 // RATE CARD
@@ -102,7 +102,7 @@ export function getSuta(state, rateCard = RATE_CARD) {
 }
 
 /**
- * Price a PEO quote.
+ * Price an EOR quote.
  *
  * input = {
  *   feeModel: "pepm" | "percent",
@@ -161,7 +161,7 @@ export function calculateQuote(input, rateCard = RATE_CARD) {
       adminDetail = `${usd(rateCard.adminFee.minimumMonthly)} monthly minimum applied`;
     }
   }
-  add("admin", "fees", "PEO admin fee", adminDetail, adminAnnual);
+  add("admin", "fees", "EOR admin fee", adminDetail, adminAnnual);
 
   // --- Add-ons ---
   const selected = new Set(input.addOnIds || []);
@@ -221,7 +221,7 @@ export function calculateQuote(input, rateCard = RATE_CARD) {
     firstYearTotal: cents(annualTotal + setupFee),
     minimumApplied,
     unratedGroups,
-    // PEO fees only (admin + add-ons), the number a client compares across PEOs.
+    // EOR fees only (admin + add-ons), the number a client compares across EOR providers.
     effectivePepm: headcount ? cents(feesAnnual / 12 / headcount) : 0,
     effectivePercentOfPayroll: annualPayroll ? feesAnnual / annualPayroll : 0,
   };

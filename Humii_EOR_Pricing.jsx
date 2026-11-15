@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { HUMII_LOGO } from "./Humii_Logo.js";
-import { RATE_CARD, US_STATES, calculateQuote } from "./Humii_PEO_Pricing_Engine.js";
+import { RATE_CARD, US_STATES, calculateQuote } from "./Humii_EOR_Pricing_Engine.js";
 
 const C = {
   ink: "#14213D",
@@ -143,7 +143,7 @@ function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy,
           )}
           <div style={{ borderBottom: `3px solid ${C.accent}`, paddingBottom: 14, marginBottom: 18 }}>
             <img src={HUMII_LOGO} alt="Humii" style={{ height: 44, display: "block" }} />
-            <h1 style={{ fontSize: 24, margin: "12px 0 0" }}>Exhibit A: PEO Service Pricing</h1>
+            <h1 style={{ fontSize: 24, margin: "12px 0 0" }}>Exhibit A: Employer of Record (EOR) Service Pricing</h1>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px 24px", marginBottom: 22 }}>
@@ -189,6 +189,7 @@ function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy,
 
           <h2 style={{ ...h2, marginTop: 22 }}>Assumptions</h2>
           <ul style={{ fontSize: 12.5, color: C.muted, paddingLeft: 18, margin: 0, lineHeight: 1.6 }}>
+            <li>Humii acts as the employer of record for the covered workforce and remits the payroll taxes and workers' compensation shown here.</li>
             <li>Pricing is an estimate based on the headcount, wages and job classifications shown above. Final charges follow actual payroll.</li>
             <li>Employer payroll taxes and workers' compensation are pass-through costs shown for budgeting. Tax rates and wage bases are set by federal and state agencies and may change.</li>
             <li>Monthly amounts are the annual estimate divided by 12. Taxes with annual wage caps are collected earlier in the year.</li>
@@ -210,7 +211,7 @@ function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy,
   );
 }
 
-export default function HumiiPeoPricing({ rateCard = RATE_CARD }) {
+export default function HumiiEorPricing({ rateCard = RATE_CARD }) {
   const [client, setClient] = useState("");
   const [state, setState] = useState("");
   const [feeModel, setFeeModel] = useState("pepm");
@@ -244,7 +245,7 @@ export default function HumiiPeoPricing({ rateCard = RATE_CARD }) {
       <div style={{ maxWidth: 920, margin: "0 auto" }}>
         <header style={{ marginBottom: 20 }}>
           <img src={HUMII_LOGO} alt="Humii" style={{ height: 44, display: "block" }} />
-          <h1 style={{ fontSize: 26, margin: "10px 0 2px" }}>PEO Pricing Quote</h1>
+          <h1 style={{ fontSize: 26, margin: "10px 0 2px" }}>EOR Pricing Quote</h1>
           <div style={{ fontSize: 13, color: C.muted }}>
             Rate card effective {rateCard.effectiveDate} · Internal use
           </div>
