@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
+import { HUMII_LOGO } from "./Humii_Logo.js";
 import { RATE_CARD, US_STATES, calculateQuote } from "./Humii_PEO_Pricing_Engine.js";
 
 const C = {
   ink: "#14213D",
-  primary: "#2A5BD7",
-  tint: "#EEF3FE",
+  primary: "#183780", // Humii navy: buttons, labels
+  accent: "#306EFF", // Humii blue: rules, highlights
+  tint: "#EEF3FF",
   bg: "#F5F7FB",
   white: "#FFFFFF",
   border: "#D5DCE8",
@@ -139,9 +141,9 @@ function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy,
               DRAFT · SAMPLE RATES · NOT FOR DISTRIBUTION
             </div>
           )}
-          <div style={{ borderBottom: `3px solid ${C.primary}`, paddingBottom: 14, marginBottom: 18 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.5, color: C.primary }}>HUMII</div>
-            <h1 style={{ fontSize: 24, margin: "4px 0 0" }}>Exhibit A: PEO Service Pricing</h1>
+          <div style={{ borderBottom: `3px solid ${C.accent}`, paddingBottom: 14, marginBottom: 18 }}>
+            <img src={HUMII_LOGO} alt="Humii" style={{ height: 44, display: "block" }} />
+            <h1 style={{ fontSize: 24, margin: "12px 0 0" }}>Exhibit A: PEO Service Pricing</h1>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px 24px", marginBottom: 22 }}>
@@ -241,8 +243,8 @@ export default function HumiiPeoPricing({ rateCard = RATE_CARD }) {
       <style>{`@media print { .no-print { display: none !important; } }`}</style>
       <div style={{ maxWidth: 920, margin: "0 auto" }}>
         <header style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.5, color: C.primary }}>HUMII</div>
-          <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>PEO Pricing Quote</h1>
+          <img src={HUMII_LOGO} alt="Humii" style={{ height: 44, display: "block" }} />
+          <h1 style={{ fontSize: 26, margin: "10px 0 2px" }}>PEO Pricing Quote</h1>
           <div style={{ fontSize: 13, color: C.muted }}>
             Rate card effective {rateCard.effectiveDate} · Internal use
           </div>
