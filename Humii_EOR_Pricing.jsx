@@ -210,7 +210,7 @@ function Exhibit({ quote, rateCard, client, state, feeModel, groups, preparedBy,
                   <div style={{ fontSize: 14, fontWeight: 700, marginTop: 14 }}>{party}</div>
                   {["Signature", "Printed name", "Title", "Date"].map(f => (
                     <div key={f}>
-                      <div style={{ borderBottom: `1px solid ${C.ink}`, height: f === "Signature" ? 44 : 30 }} />
+                      <div style={{ borderBottom: `1px solid ${C.ink}`, height: f === "Signature" ? 34 : 22 }} />
                       <div style={{ fontSize: 11, color: C.muted, textTransform: "uppercase", letterSpacing: 0.6, paddingTop: 3 }}>{f}</div>
                     </div>
                   ))}
