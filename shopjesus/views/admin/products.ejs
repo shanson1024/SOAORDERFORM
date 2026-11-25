@@ -2,14 +2,14 @@
 <div class="wrap">
   <div class="section-head"><h1 class="page-title left">Products</h1><a class="btn btn-red" href="/admin/products/new">Add product</a></div>
   <div class="table-scroll"><table class="table">
-    <thead><tr><th></th><th>Product</th><th>Category</th><th class="num">Price</th><th class="num">Stock</th><th>Status</th></tr></thead>
+    <thead><tr><th></th><th>Product</th><th>Category</th><th class="num">Price</th><th class="num"><%= config.madeToOrder ? 'Options' : 'Stock' %></th><th>Status</th></tr></thead>
     <tbody><% for (const p of products) { %>
       <tr>
         <td><img class="thumb" src="<%= productImage(p) %>" alt="" width="48" height="48" loading="lazy"></td>
         <td><a href="/admin/products/<%= p.id %>"><b><%= p.name %></b></a><% if (p.featured) { %> <small>featured</small><% } %></td>
         <td><%= CATEGORIES[p.category] %></td>
         <td class="num"><%= money(p.price_cents) %></td>
-        <td class="num"><%= p.total_stock %> <small>(<%= p.variant_count %> options)</small></td>
+        <td class="num"><%= config.madeToOrder ? '' : p.total_stock + ' ' %><small>(<%= p.variant_count %> options)</small></td>
         <td><span class="status status-<%= p.active ? 'shipped' : 'cancelled' %>"><%= p.active ? 'live' : 'hidden' %></span></td>
       </tr>
     <% } %></tbody>

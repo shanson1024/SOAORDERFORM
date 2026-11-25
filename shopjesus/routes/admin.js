@@ -5,7 +5,7 @@ const fs = require('fs');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
 const { db, slugify, UPLOAD_DIR } = require('../lib/db');
-const { CATEGORIES, imageUrl } = require('../lib/helpers');
+const { config, CATEGORIES, imageUrl } = require('../lib/helpers');
 const { getOrder, markShipped } = require('../lib/orders');
 
 const router = express.Router();
@@ -95,7 +95,7 @@ router.post('/orders/:id', (req, res, next) => {
     const wasCounted = ['paid', 'shipped'].includes(order.status);
     db.transaction(() => {
       db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, order.id);
-      if (wasCounted && req.body.restock) {
+      if (wasCounted && req.body.restock && !config.madeToOrder) {
         const inc = db.prepare('UPDATE variants SET stock = stock + ? WHERE id = ?');
         for (const it of order.items) if (it.variant_id) inc.run(it.quantity, it.variant_id);
       }

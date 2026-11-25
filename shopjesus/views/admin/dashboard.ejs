@@ -9,6 +9,7 @@
   </div>
   <div class="section-head"><h2>Recent orders</h2><a href="/admin/orders">All orders</a></div>
   <%- include('orders-table', { orders: recent }) %>
+  <% if (!config.madeToOrder) { %>
   <div class="section-head"><h2>Low stock</h2><a href="/admin/products">All products</a></div>
   <% if (!lowStock.length) { %><p class="empty">Nothing is running low.</p><% } else { %>
   <div class="table-scroll"><table class="table">
@@ -17,6 +18,7 @@
       <tr><td><a href="/admin/products/<%= v.id %>"><%= v.name %></a></td><td><%= v.color %> / <%= v.size %></td><td class="num"><%= v.stock %></td></tr>
     <% } %></tbody>
   </table></div>
+  <% } %>
   <% } %>
 </div>
 <%- include('../partials/foot') %>

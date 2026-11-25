@@ -8,7 +8,12 @@ const config = {
   shipCountries: (process.env.SHIP_COUNTRIES || 'US').split(',').map((s) => s.trim().toUpperCase()).filter(Boolean),
   stripeTax: process.env.STRIPE_TAX === 'true',
   isProd: process.env.NODE_ENV === 'production',
+  // Made to order: nothing sells out and stock is not tracked. Set MADE_TO_ORDER=false to track inventory.
+  madeToOrder: process.env.MADE_TO_ORDER !== 'false',
 };
+
+/** SQL expression for a variant's available quantity. */
+const STOCK = config.madeToOrder ? '9999' : 'v.stock';
 
 const CATEGORIES = { tshirts: 'T-Shirts', hoodies: 'Hoodies', hats: 'Hats', polos: 'Polos', buttondowns: 'Button-Downs' };
 const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', 'One Size'];
@@ -51,7 +56,7 @@ function productImage(p, hex, color) {
 /** Cart lives in the session cookie as [{v: variantId, q: qty}]. Returns priced lines from the DB. */
 function loadCart(req) {
   const raw = Array.isArray(req.session.cart) ? req.session.cart : [];
-  const q = db.prepare(`SELECT v.id variant_id, v.color, v.color_hex, v.size, v.stock,
+  const q = db.prepare(`SELECT v.id variant_id, v.color, v.color_hex, v.size, ${STOCK} stock,
       p.id product_id, p.slug, p.name, p.price_cents, p.image, p.category
     FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ? AND p.active = 1`);
   const lines = [];
@@ -141,4 +146,4 @@ function productSvg(category, hex, text) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img"><rect width="400" height="400" fill="#efefed"/>${art}</svg>`;
 }
 
-module.exports = { config, CATEGORIES, money, shippingFor, sortSizes, productImage, imageUrl, colorImageQ, firstImageQ, loadCart, productSvg, esc };
+module.exports = { config, STOCK, CATEGORIES, money, shippingFor, sortSizes, productImage, imageUrl, colorImageQ, firstImageQ, loadCart, productSvg, esc };

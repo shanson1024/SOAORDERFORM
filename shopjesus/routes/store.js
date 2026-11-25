@@ -1,12 +1,12 @@
 const express = require('express');
 const { db } = require('../lib/db');
-const { config, CATEGORIES, loadCart, productSvg, productImage, colorImageQ, firstImageQ, sortSizes, money } = require('../lib/helpers');
+const { config, STOCK, CATEGORIES, loadCart, productSvg, productImage, colorImageQ, firstImageQ, sortSizes, money } = require('../lib/helpers');
 const { getOrder, createPendingOrder, markPaid, fulfillStripeSession } = require('../lib/orders');
 
 const router = express.Router();
 
 const LIST_SQL = `SELECT p.*,
-    (SELECT COALESCE(SUM(stock),0) FROM variants v WHERE v.product_id = p.id) total_stock,
+    (SELECT COALESCE(SUM(${STOCK}),0) FROM variants v WHERE v.product_id = p.id) total_stock,
     (SELECT color_hex FROM variants v WHERE v.product_id = p.id ORDER BY v.id LIMIT 1) first_hex
   FROM products p WHERE p.active = 1`;
 
@@ -38,7 +38,7 @@ router.get('/shop', (req, res) => {
 router.get('/product/:slug', (req, res, next) => {
   const product = db.prepare('SELECT * FROM products WHERE slug = ? AND active = 1').get(req.params.slug);
   if (!product) return next();
-  const variants = db.prepare('SELECT id, color, color_hex, size, stock FROM variants WHERE product_id = ? ORDER BY id').all(product.id);
+  const variants = db.prepare(`SELECT v.id, v.color, v.color_hex, v.size, ${STOCK} stock FROM variants v WHERE v.product_id = ? ORDER BY v.id`).all(product.id);
   const colors = [];
   for (const v of variants) if (!colors.find((c) => c.color === v.color)) colors.push({ color: v.color, hex: v.color_hex });
   const sizes = [...new Set(variants.map((v) => v.size))].sort(sortSizes);
@@ -73,7 +73,7 @@ router.get('/cart', (req, res) => {
 router.post('/cart/add', (req, res) => {
   const product = db.prepare('SELECT id, slug, name FROM products WHERE id = ? AND active = 1').get(req.body.product_id);
   if (!product) return res.redirect('/shop');
-  const v = db.prepare('SELECT id, stock FROM variants WHERE product_id = ? AND color = ? AND size = ?')
+  const v = db.prepare(`SELECT v.id, ${STOCK} stock FROM variants v WHERE v.product_id = ? AND v.color = ? AND v.size = ?`)
     .get(product.id, String(req.body.color || ''), String(req.body.size || ''));
   const back = '/product/' + product.slug;
   if (!v) { req.session.flash = { type: 'error', text: 'Please choose a color and size.' }; return res.redirect(back); }

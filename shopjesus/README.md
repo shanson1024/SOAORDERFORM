@@ -36,6 +36,7 @@ no payment. Test mode is disabled when `NODE_ENV=production`.
 - Log in at `/admin` with `ADMIN_PASSWORD`.
 - **Products**: add or edit name, price, description, photo, colors, sizes and stock. The products that ship
   with the site are placeholders with drawn mock-ups; replace them with your own items and photos.
+- **Inventory**: items are made to order, so nothing sells out. Set `MADE_TO_ORDER=false` to track stock.
 - **Orders**: paid orders show under "to ship". Marking one shipped emails the customer the tracking number.
 - **Sales policy**: all sales are final (see `/shipping`). For exceptions, issue the refund in the Stripe dashboard, then mark the order refunded here to restock.
 

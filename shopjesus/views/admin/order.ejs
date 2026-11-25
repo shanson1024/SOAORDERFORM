@@ -17,7 +17,7 @@
     <input type="hidden" name="_csrf" value="<%= csrf %>">
     <h3>Cancel or refund</h3>
     <p class="hint">All sales are final by policy. Use this for damaged or wrong items, or orders you cannot fulfill. This only updates the order here; issue the actual refund from your Stripe dashboard.</p>
-    <label class="check"><input type="checkbox" name="restock" value="1" checked> Put items back in stock</label>
+    <% if (!config.madeToOrder) { %><label class="check"><input type="checkbox" name="restock" value="1" checked> Put items back in stock</label><% } %>
     <div class="btn-row">
       <button class="btn" name="action" value="cancel">Mark cancelled</button>
       <button class="btn" name="action" value="refund">Mark refunded</button>

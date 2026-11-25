@@ -48,6 +48,7 @@ function markPaid(orderId, details) {
       details.email || null, details.name || null, details.address ? JSON.stringify(details.address) : null,
       details.subtotal, details.shipping, details.tax || 0, details.total, details.paymentIntent || null, orderId);
     if (res.changes === 0) return false;
+    if (config.madeToOrder) return true;
     const dec = db.prepare('UPDATE variants SET stock = MAX(stock - ?, 0) WHERE id = ?');
     for (const it of db.prepare('SELECT variant_id, quantity FROM order_items WHERE order_id = ?').all(orderId)) {
       if (it.variant_id) dec.run(it.quantity, it.variant_id);
