@@ -1,0 +1,10 @@
+<%- include('../partials/head') %>
+<div class="wrap">
+  <h1 class="page-title">Orders</h1>
+  <div class="toolbar"><div class="pills">
+    <a class="<%= !status ? 'on' : '' %>" href="/admin/orders">All</a>
+    <% for (const s of STATUSES) { %><a class="<%= status === s ? 'on' : '' %>" href="/admin/orders?status=<%= s %>"><%= s === 'paid' ? 'to ship' : s === 'pending' ? 'abandoned' : s %></a><% } %>
+  </div></div>
+  <%- include('orders-table', { orders }) %>
+</div>
+<%- include('../partials/foot') %>

@@ -1,0 +1,46 @@
+<%- include('partials/head') %>
+<div class="wrap narrow">
+  <h1 class="page-title">Your Cart</h1>
+  <% for (const n of cart.notices) { %><div class="flash flash-error"><%= n %></div><% } %>
+  <% if (!cart.lines.length) { %>
+    <p class="empty">Your cart is empty.</p>
+    <p class="center"><a class="btn btn-red" href="/shop">Start shopping</a></p>
+  <% } else { %>
+  <div class="cart-lines">
+    <% for (const l of cart.lines) { %>
+    <div class="cart-line">
+      <a href="/product/<%= l.slug %>"><img src="<%= l.img %>" alt="" width="88" height="88"></a>
+      <div class="cart-line-info">
+        <a href="/product/<%= l.slug %>"><strong><%= l.name %></strong></a>
+        <span><%= l.color %> / <%= l.size %></span>
+        <span><%= money(l.price_cents) %></span>
+        <form method="post" action="/cart/update" class="qty-form">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <input type="hidden" name="variant_id" value="<%= l.variant_id %>">
+          <label class="sr-only" for="q<%= l.variant_id %>">Quantity</label>
+          <select name="qty" id="q<%= l.variant_id %>" data-autosubmit>
+            <% for (let i = 1; i <= Math.min(l.stock, 20); i++) { %><option <%= i === l.qty ? 'selected' : '' %>><%= i %></option><% } %>
+          </select>
+          <noscript><button class="btn btn-sm">Update</button></noscript>
+          <button class="linklike" name="remove" value="1">Remove</button>
+        </form>
+      </div>
+      <div class="cart-line-total"><%= money(l.line_cents) %></div>
+    </div>
+    <% } %>
+  </div>
+  <div class="summary">
+    <div><span>Subtotal</span><span><%= money(cart.subtotal) %></span></div>
+    <div><span>Shipping</span><span><%= cart.shipping === 0 ? 'Free' : money(cart.shipping) %></span></div>
+    <% if (cart.shipping > 0) { %><p class="hint">Add <%= money(config.freeShippingThresholdCents - cart.subtotal) %> more for free shipping.</p><% } %>
+    <div class="summary-total"><span>Total</span><span><%= money(cart.total) %></span></div>
+    <p class="hint"><%= config.stripeTax ? 'Sales tax is calculated at checkout.' : '' %></p>
+    <form method="post" action="/checkout">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <button class="btn btn-red btn-block">Checkout</button>
+    </form>
+    <p class="center"><a href="/shop">Continue shopping</a></p>
+  </div>
+  <% } %>
+</div>
+<%- include('partials/foot') %>

@@ -1,0 +1,20 @@
+<%- include('partials/head') %>
+<div class="wrap narrow">
+  <h1 class="page-title">Checkout</h1>
+  <div class="flash flash-error">Test mode: Stripe is not connected, so no payment is taken. This page never appears on the live site.</div>
+  <form method="post" action="/checkout/test" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>Email<input type="email" name="email" required></label>
+    <label>Full name<input name="name" required></label>
+    <label>Address<input name="line1" required></label>
+    <label>Apt / suite<input name="line2"></label>
+    <div class="row3">
+      <label>City<input name="city" required></label>
+      <label>State<input name="state" maxlength="2" required></label>
+      <label>ZIP<input name="postal_code" required></label>
+    </div>
+    <div class="summary"><div class="summary-total"><span>Total</span><span><%= money(cart.total) %></span></div></div>
+    <button class="btn btn-red btn-block">Place test order</button>
+  </form>
+</div>
+<%- include('partials/foot') %>

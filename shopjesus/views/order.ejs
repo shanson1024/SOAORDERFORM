@@ -1,0 +1,15 @@
+<%- include('partials/head') %>
+<div class="wrap narrow">
+  <% if (order.status === 'pending') { %>
+    <h1 class="page-title">Payment pending</h1>
+    <p class="center">We have not received payment confirmation for order <b><%= order.number %></b> yet. Refresh this page in a moment.</p>
+  <% } else { %>
+    <h1 class="page-title">Thank you!</h1>
+    <p class="center">Order <b><%= order.number %></b> &middot; <span class="status status-<%= order.status %>"><%= order.status %></span></p>
+    <% if (order.email) { %><p class="center hint">A confirmation was sent to <%= order.email %>.</p><% } %>
+    <% if (order.tracking_number) { %><p class="center">Tracking number: <b><%= order.tracking_number %></b></p><% } %>
+  <% } %>
+  <%- include('partials/order-body', { order }) %>
+  <p class="center"><a class="btn" href="/shop">Keep shopping</a></p>
+</div>
+<%- include('partials/foot') %>

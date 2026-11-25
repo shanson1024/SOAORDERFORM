@@ -1,0 +1,18 @@
+<table class="table">
+  <thead><tr><th>Item</th><th>Qty</th><th class="num">Total</th></tr></thead>
+  <tbody>
+  <% for (const i of order.items) { %>
+    <tr><td><%= i.product_name %><br><small><%= i.color %> / <%= i.size %></small></td><td><%= i.quantity %></td><td class="num"><%= money(i.unit_price_cents * i.quantity) %></td></tr>
+  <% } %>
+  </tbody>
+</table>
+<div class="summary">
+  <div><span>Subtotal</span><span><%= money(order.subtotal_cents) %></span></div>
+  <div><span>Shipping</span><span><%= order.shipping_cents ? money(order.shipping_cents) : 'Free' %></span></div>
+  <% if (order.tax_cents) { %><div><span>Tax</span><span><%= money(order.tax_cents) %></span></div><% } %>
+  <div class="summary-total"><span>Total</span><span><%= money(order.total_cents) %></span></div>
+</div>
+<% if (order.address) { const a = order.address; %>
+<h3>Ship to</h3>
+<p class="address"><%= order.name %><br><%= a.line1 %><% if (a.line2) { %><br><%= a.line2 %><% } %><br><%= a.city %>, <%= a.state %> <%= a.postal_code %><br><%= a.country %></p>
+<% } %>

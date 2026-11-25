@@ -1,0 +1,13 @@
+<a class="card" href="/product/<%= p.slug %>">
+  <div class="card-img">
+    <img src="<%= productImage(p, p.first_hex) %>" alt="<%= p.name %>" loading="lazy" width="400" height="400">
+    <% if (p.total_stock <= 0) { %><span class="badge">Sold out</span><% } %>
+  </div>
+  <div class="card-body">
+    <h3><%= p.name %></h3>
+    <div class="card-meta">
+      <span class="price"><%= money(p.price_cents) %></span>
+      <span class="dots"><% for (const c of p.colors) { %><i style="background:<%= c.color_hex %>" title="<%= c.color %>"></i><% } %></span>
+    </div>
+  </div>
+</a>

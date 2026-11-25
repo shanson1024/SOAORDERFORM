@@ -1,0 +1,29 @@
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <img src="/img/logo.png" alt="ShopJesus.com" width="200" height="84" loading="lazy">
+      <p>Wear your faith out loud.</p>
+    </div>
+    <div>
+      <h4>Shop</h4>
+      <a href="/shop">Shop All</a>
+      <% for (const [key, label] of Object.entries(CATEGORIES)) { %><a href="/shop?category=<%= key %>"><%= label %></a><% } %>
+    </div>
+    <div>
+      <h4>Help</h4>
+      <a href="/shipping">Shipping &amp; Returns</a>
+      <a href="/contact">Contact</a>
+      <a href="/about">About Us</a>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms of Service</a>
+    </div>
+  </div>
+  <div class="wrap copyright">&copy; <%= new Date().getFullYear() %> ShopJesus.com. All rights reserved.</div>
+</footer>
+<script src="/js/app.js" defer></script>
+</body>
+</html>

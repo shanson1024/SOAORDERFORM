@@ -1,0 +1,11 @@
+<%- include('../partials/head') %>
+<div class="wrap narrow">
+  <h1 class="page-title">Admin Login</h1>
+  <% if (error) { %><div class="flash flash-error"><%= error %></div><% } %>
+  <form method="post" action="/admin/login" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>Password<input type="password" name="password" required autofocus autocomplete="current-password"></label>
+    <button class="btn btn-red btn-block">Log in</button>
+  </form>
+</div>
+<%- include('../partials/foot') %>

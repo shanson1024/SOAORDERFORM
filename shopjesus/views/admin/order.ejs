@@ -1,0 +1,34 @@
+<%- include('../partials/head') %>
+<div class="wrap narrow">
+  <p class="crumbs"><a href="/admin/orders">Orders</a> / <%= order.number %></p>
+  <h1 class="page-title"><%= order.number %> <span class="status status-<%= order.status %>"><%= order.status %></span></h1>
+  <p class="hint center">Placed <%= order.created_at %> UTC<% if (order.email) { %> &middot; <a href="mailto:<%= order.email %>"><%= order.email %></a><% } %></p>
+  <%- include('../partials/order-body', { order }) %>
+  <% if (order.stripe_payment_intent) { %><p class="hint">Stripe payment: <%= order.stripe_payment_intent %></p><% } %>
+
+  <% if (order.status === 'paid' || order.status === 'shipped') { %>
+  <form method="post" action="/admin/orders/<%= order.id %>" class="form panel">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <h3><%= order.status === 'shipped' ? 'Update tracking' : 'Mark as shipped' %></h3>
+    <label>Tracking number (optional)<input name="tracking_number" value="<%= order.tracking_number || '' %>"></label>
+    <button class="btn btn-red" name="action" value="ship"><%= order.status === 'shipped' ? 'Update and re-send email' : 'Mark shipped' %></button>
+  </form>
+  <form method="post" action="/admin/orders/<%= order.id %>" class="form panel">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <h3>Cancel or refund</h3>
+    <p class="hint">This only updates the order here. Issue the actual refund from your Stripe dashboard.</p>
+    <label class="check"><input type="checkbox" name="restock" value="1" checked> Put items back in stock</label>
+    <div class="btn-row">
+      <button class="btn" name="action" value="cancel">Mark cancelled</button>
+      <button class="btn" name="action" value="refund">Mark refunded</button>
+    </div>
+  </form>
+  <% } %>
+  <form method="post" action="/admin/orders/<%= order.id %>" class="form panel">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <h3>Internal notes</h3>
+    <textarea name="notes" rows="3"><%= order.notes || '' %></textarea>
+    <button class="btn" name="action" value="notes">Save notes</button>
+  </form>
+</div>
+<%- include('../partials/foot') %>

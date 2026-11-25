@@ -1,0 +1,14 @@
+<% if (!orders.length) { %><p class="empty">No orders yet.</p><% } else { %>
+<div class="table-scroll"><table class="table">
+  <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Status</th><th class="num">Total</th></tr></thead>
+  <tbody><% for (const o of orders) { %>
+    <tr>
+      <td><a href="/admin/orders/<%= o.id %>"><b><%= o.number %></b></a></td>
+      <td><%= (o.paid_at || o.created_at).slice(0, 10) %></td>
+      <td><%= o.name || '' %><br><small><%= o.email || '' %></small></td>
+      <td><span class="status status-<%= o.status %>"><%= o.status %></span></td>
+      <td class="num"><%= money(o.total_cents) %></td>
+    </tr>
+  <% } %></tbody>
+</table></div>
+<% } %>

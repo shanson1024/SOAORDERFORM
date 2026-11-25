@@ -1,0 +1,55 @@
+<%- include('partials/head') %>
+<div class="wrap">
+  <p class="crumbs"><a href="/shop">Shop</a> / <a href="/shop?category=<%= product.category %>"><%= CATEGORIES[product.category] %></a></p>
+  <div class="pdp">
+    <div class="pdp-img">
+      <img id="pdp-img" src="<%= productImage(product, (firstInStock || variants[0] || {}).color_hex) %>" alt="<%= product.name %>" width="400" height="400"
+        data-base="<%= product.image ? '' : '/img/p/' + product.slug + '.svg' %>">
+    </div>
+    <div class="pdp-info">
+      <h1><%= product.name %></h1>
+      <p class="pdp-price"><%= money(product.price_cents) %></p>
+      <% if (!firstInStock) { %>
+        <p class="soldout">Sold out</p>
+      <% } else { %>
+      <form method="post" action="/cart/add" id="add-form" data-variants="<%= JSON.stringify(variants) %>">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <input type="hidden" name="product_id" value="<%= product.id %>">
+        <fieldset>
+          <legend>Color: <b id="color-name"><%= firstInStock.color %></b></legend>
+          <div class="swatches">
+            <% for (const c of colors) { %>
+            <label title="<%= c.color %>"><input type="radio" name="color" value="<%= c.color %>" data-hex="<%= c.hex %>" <%= c.color === firstInStock.color ? 'checked' : '' %> required>
+              <span style="background:<%= c.hex %>"></span></label>
+            <% } %>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Size</legend>
+          <div class="sizes">
+            <% for (const s of sizes) { %>
+            <label><input type="radio" name="size" value="<%= s %>" <%= s === firstInStock.size ? 'checked' : '' %> required><span><%= s %></span></label>
+            <% } %>
+          </div>
+        </fieldset>
+        <p class="stock-note" id="stock-note"></p>
+        <div class="buy-row">
+          <label class="sr-only" for="qty">Quantity</label>
+          <select name="qty" id="qty"><% for (let i = 1; i <= 10; i++) { %><option><%= i %></option><% } %></select>
+          <button class="btn btn-red btn-block" id="add-btn">Add to cart</button>
+        </div>
+      </form>
+      <% } %>
+      <div class="pdp-desc"><%= product.description %></div>
+      <ul class="pdp-points">
+        <li>Free shipping over <%= money(config.freeShippingThresholdCents) %></li>
+        <li>30-day returns and exchanges</li>
+      </ul>
+    </div>
+  </div>
+  <% if (related.length) { %>
+  <div class="section-head"><h2>You may also like</h2></div>
+  <div class="grid"><% for (const p of related) { %><%- include('partials/card', { p }) %><% } %></div>
+  <% } %>
+</div>
+<%- include('partials/foot') %>

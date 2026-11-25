@@ -1,0 +1,24 @@
+<%- include('partials/head') %>
+<section class="hero">
+  <div class="wrap hero-inner">
+    <p class="eyebrow">Faith apparel</p>
+    <h1>Wear your faith <em>out loud.</em></h1>
+    <p class="lead">Tees, hoodies, hats, polos and button-downs made to start a conversation.</p>
+    <a class="btn btn-red" href="/shop">Shop the collection</a>
+  </div>
+</section>
+<section class="wrap cats">
+  <% for (const c of cats) { %><a class="cat" href="/shop?category=<%= c.key %>"><img src="<%= c.img %>" alt="" loading="lazy"><span><%= c.label %></span></a><% } %>
+</section>
+<section class="wrap">
+  <div class="section-head"><h2>Featured</h2><a href="/shop">View all</a></div>
+  <div class="grid">
+    <% for (const p of featured) { %><%- include('partials/card', { p }) %><% } %>
+  </div>
+</section>
+<section class="values"><div class="wrap values-grid">
+  <div><strong>Free shipping</strong><span>On orders over <%= money(config.freeShippingThresholdCents) %></span></div>
+  <div><strong>30-day returns</strong><span>Easy refunds and exchanges</span></div>
+  <div><strong>Secure checkout</strong><span>Payments handled by Stripe</span></div>
+</div></section>
+<%- include('partials/foot') %>

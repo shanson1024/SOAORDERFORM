@@ -1,0 +1,26 @@
+<%- include('partials/head') %>
+<div class="wrap">
+  <h1 class="page-title"><%= title %></h1>
+  <div class="toolbar">
+    <div class="pills">
+      <a class="<%= !category ? 'on' : '' %>" href="/shop">All</a>
+      <% for (const [key, label] of Object.entries(CATEGORIES)) { %><a class="<%= category === key ? 'on' : '' %>" href="/shop?category=<%= key %>"><%= label %></a><% } %>
+    </div>
+    <form method="get" action="/shop" class="sort">
+      <% if (category) { %><input type="hidden" name="category" value="<%= category %>"><% } %>
+      <label for="sort">Sort</label>
+      <select id="sort" name="sort" data-autosubmit>
+        <option value="">Featured</option>
+        <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest</option>
+        <option value="price-asc" <%= sort === 'price-asc' ? 'selected' : '' %>>Price: low to high</option>
+        <option value="price-desc" <%= sort === 'price-desc' ? 'selected' : '' %>>Price: high to low</option>
+      </select>
+      <noscript><button class="btn btn-sm">Go</button></noscript>
+    </form>
+  </div>
+  <% if (!products.length) { %><p class="empty">No products here yet. Check back soon.</p><% } %>
+  <div class="grid">
+    <% for (const p of products) { %><%- include('partials/card', { p }) %><% } %>
+  </div>
+</div>
+<%- include('partials/foot') %>
