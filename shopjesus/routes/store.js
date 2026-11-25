@@ -67,7 +67,7 @@ router.get('/img/p/:slug.svg', (req, res, next) => {
 
 // ---- Cart ----
 router.get('/cart', (req, res) => {
-  res.render('cart', { cart: loadCart(req), title: 'Your Cart' });
+  res.render('cart', { cart: loadCart(req), title: 'Your Cart', checkoutReady: !!req.app.locals.stripe || !config.isProd });
 });
 
 router.post('/cart/add', (req, res) => {
@@ -111,7 +111,7 @@ router.post('/checkout', async (req, res, next) => {
 
     if (!stripe) {
       if (config.isProd) {
-        req.session.flash = { type: 'error', text: 'Checkout is temporarily unavailable. Please try again soon.' };
+        req.session.flash = { type: 'error', text: 'Online checkout is opening soon. Please check back.' };
         return res.redirect('/cart');
       }
       return res.render('checkout-test', { cart, title: 'Checkout (test mode)' });
@@ -189,10 +189,11 @@ const PAGES = {
     'ShopJesus.com makes apparel for people who want to wear their faith out loud. Every tee, hoodie and hat is designed to start a conversation and point back to Him.',
     'We are a small team that cares about quality prints, comfortable fits and treating customers the way we would want to be treated.',
   ]],
-  shipping: ['Shipping & Returns', [
+  shipping: ['Shipping & Sales Policy', [
     `Orders ship within 2-3 business days. Standard shipping is ${money(config.shippingFlatCents)}, and free on orders over ${money(config.freeShippingThresholdCents)}.`,
     'You will receive an email with tracking as soon as your order ships.',
-    'Not happy with your order? Unworn, unwashed items can be returned within 30 days of delivery for a refund or exchange. Email us to start a return.',
+    'All sales are final. We do not offer returns, refunds or exchanges, so please check your size and color before ordering.',
+    `If your order arrives damaged or we sent the wrong item, email ${config.contactEmail} within 7 days of delivery and we will make it right.`,
   ]],
   contact: ['Contact', [
     `Questions about an order, sizing or anything else? Email us at ${config.contactEmail} and we will get back to you within one business day.`,
@@ -203,7 +204,7 @@ const PAGES = {
     `To request a copy or deletion of your data, email ${config.contactEmail}.`,
   ]],
   terms: ['Terms of Service', [
-    'By placing an order you agree to pay the total shown at checkout. Prices are in US dollars. We may cancel and refund any order we are unable to fulfill.',
+    'By placing an order you agree to pay the total shown at checkout. Prices are in US dollars. All sales are final. We may cancel and refund any order we are unable to fulfill.',
     'All designs and content on this site are the property of ShopJesus.com.',
   ]],
 };

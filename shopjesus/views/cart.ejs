@@ -37,8 +37,9 @@
     <p class="hint"><%= config.stripeTax ? 'Sales tax is calculated at checkout.' : '' %></p>
     <form method="post" action="/checkout">
       <input type="hidden" name="_csrf" value="<%= csrf %>">
-      <button class="btn btn-red btn-block">Checkout</button>
+      <button class="btn btn-red btn-block" <%= checkoutReady ? '' : 'disabled' %>><%= checkoutReady ? 'Checkout' : 'Checkout opening soon' %></button>
     </form>
+    <p class="hint center">All sales are final. See our <a href="/shipping">sales policy</a>.</p>
     <p class="center"><a href="/shop">Continue shopping</a></p>
   </div>
   <% } %>
