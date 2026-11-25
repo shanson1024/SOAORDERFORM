@@ -4,7 +4,7 @@ const config = {
   storeName: 'ShopJesus.com',
   contactEmail: process.env.CONTACT_EMAIL || 'support@shopjesus.com',
   shippingFlatCents: parseInt(process.env.SHIPPING_FLAT_CENTS || '595', 10),
-  freeShippingThresholdCents: parseInt(process.env.FREE_SHIPPING_THRESHOLD_CENTS || '7500', 10),
+  freeShippingThresholdCents: parseInt(process.env.FREE_SHIPPING_THRESHOLD_CENTS || '9900', 10),
   shipCountries: (process.env.SHIP_COUNTRIES || 'US').split(',').map((s) => s.trim().toUpperCase()).filter(Boolean),
   stripeTax: process.env.STRIPE_TAX === 'true',
   isProd: process.env.NODE_ENV === 'production',
