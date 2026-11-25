@@ -1,6 +1,6 @@
 const express = require('express');
 const { db } = require('../lib/db');
-const { config, CATEGORIES, loadCart, productSvg, productImage, sortSizes, money } = require('../lib/helpers');
+const { config, CATEGORIES, loadCart, productSvg, productImage, colorImageQ, firstImageQ, sortSizes, money } = require('../lib/helpers');
 const { getOrder, createPendingOrder, markPaid, fulfillStripeSession } = require('../lib/orders');
 
 const router = express.Router();
@@ -43,8 +43,16 @@ router.get('/product/:slug', (req, res, next) => {
   for (const v of variants) if (!colors.find((c) => c.color === v.color)) colors.push({ color: v.color, hex: v.color_hex });
   const sizes = [...new Set(variants.map((v) => v.size))].sort(sortSizes);
   const firstInStock = variants.find((v) => v.stock > 0);
+  const colorImages = {};
+  // If a color has no photo of its own, another color's photo is shown; say so on the page.
+  const fallback = product.image ? null : firstImageQ.get(product.id);
+  const shownIn = {};
+  for (const c of colors) {
+    colorImages[c.color] = productImage(product, c.hex, c.color);
+    if (fallback && !colorImageQ.get(product.id, c.color)) shownIn[c.color] = fallback.color;
+  }
   const related = colorsFor(db.prepare(LIST_SQL + ' AND p.category = ? AND p.id != ? ORDER BY p.id LIMIT 4').all(product.category, product.id));
-  res.render('product', { product, variants, colors, sizes, firstInStock, related, title: product.name });
+  res.render('product', { product, variants, colors, sizes, firstInStock, related, colorImages, shownIn, title: product.name });
 });
 
 // Placeholder artwork until real photos are uploaded.

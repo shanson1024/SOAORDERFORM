@@ -34,6 +34,12 @@ CREATE TABLE IF NOT EXISTS variants (
   stock INTEGER NOT NULL DEFAULT 0,
   UNIQUE (product_id, color, size)
 );
+CREATE TABLE IF NOT EXISTS product_images (
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  color TEXT NOT NULL,
+  image TEXT NOT NULL,
+  PRIMARY KEY (product_id, color)
+);
 CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   number TEXT UNIQUE,
@@ -68,49 +74,46 @@ CREATE TABLE IF NOT EXISTS order_items (
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status, created_at);
 `);
 
-const SIZES = ['S', 'M', 'L', 'XL', '2XL'];
-const C = {
-  black: ['Black', '#151515'],
-  white: ['White', '#f4f4f2'],
-  red: ['Red', '#c8102e'],
-  sand: ['Sand', '#d6c7a9'],
-  navy: ['Navy', '#1e2a44'],
-  heather: ['Heather Grey', '#9a9a9a'],
-};
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'];
+const BLACK = '#151515';
+const WHITE = '#f4f4f2';
 
+// Starting catalog: [name, category, price, featured, description, black photo, white photo].
+// Every item comes in Black and White. Edit everything in the admin afterwards.
 function seed() {
   if (db.prepare('SELECT COUNT(*) n FROM products').get().n > 0) return;
   const items = [
-    ['Faith Over Fear Tee', 'tshirts', 1999, 'FAITH OVER FEAR', 1, [C.black, C.white, C.red],
-      'Soft, heavyweight cotton tee with a bold front print. A daily reminder of 2 Timothy 1:7.'],
-    ['Saved By Grace Tee', 'tshirts', 1999, 'SAVED BY GRACE', 1, [C.white, C.sand, C.navy],
-      'Classic-fit crew neck tee. Ephesians 2:8 on your chest, comfort all day.'],
-    ['John 3:16 Tee', 'tshirts', 1999, 'JOHN 3:16', 0, [C.black, C.heather, C.red],
-      'The verse that says it all. Pre-shrunk cotton, true to size.'],
-    ['Walk By Faith Hoodie', 'hoodies', 2999, 'WALK BY FAITH', 1, [C.black, C.heather, C.navy],
-      'Midweight fleece pullover hoodie with front pouch pocket. 2 Corinthians 5:7.'],
-    ['He Is Risen Hoodie', 'hoodies', 2999, 'HE IS RISEN', 1, [C.black, C.red, C.sand],
-      'Warm brushed-fleece hoodie with a statement print. Built for cold mornings and bold faith.'],
-    ['Jesus Saves Dad Hat', 'hats', 2499, 'JESUS SAVES', 1, [C.black, C.white, C.red],
-      'Unstructured six-panel cap with embroidered front and adjustable strap.'],
-    ['Blessed Snapback', 'hats', 2499, 'BLESSED', 1, [C.black, C.navy],
-      'Structured flat-brim snapback with raised embroidery.'],
-    ['Faith Polo', 'polos', 2999, 'FAITH', 1, [C.black, C.white, C.navy],
-      'Breathable pique polo with embroidered left chest. Sunday service to the golf course.'],
-    ['Blessed Polo', 'polos', 2999, 'BLESSED', 0, [C.red, C.black, C.heather],
-      'Classic-fit polo with a three-button placket and embroidered left chest.'],
-    ['Grace Button-Down Shirt', 'buttondowns', 3999, 'GRACE', 1, [C.white, C.navy, C.black],
-      'Crisp long-sleeve button-down with embroidered left chest. Dress it up or down.'],
-    ['Redeemed Button-Down Shirt', 'buttondowns', 3999, 'REDEEMED', 0, [C.white, C.sand],
-      'Easy-care long-sleeve button-down shirt with a tailored fit.'],
+    ['ShopJesus Logo Tee', 'tshirts', 1999, 1,
+      'Classic crew neck tee with the ShopJesus.com logo printed big across the chest.', 'tee-black', 'tee-white'],
+    ['Jesus Is My Homeboy Tee', 'tshirts', 1999, 1,
+      'Crew neck tee with a bold brush-script "Jesus Is My Homeboy" print.', 'homeboy-tee-black', null],
+    ['Jesus Was A Gym Rat Tee', 'tshirts', 1999, 1,
+      'Crew neck tee with a varsity-style "Jesus Was A Gym Rat" print, barbell and crown of thorns.', 'gym-rat-tee-black', null],
+    ['ShopJesus Logo Hoodie', 'hoodies', 2999, 1,
+      'Pullover fleece hoodie with front pouch pocket, drawstring hood and a large ShopJesus.com logo.', 'hoodie-black', 'hoodie-white'],
+    ['Jesus Is My Homeboy Hoodie', 'hoodies', 2999, 1,
+      'Pullover fleece hoodie with front pouch pocket and a bold "Jesus Is My Homeboy" print.', 'homeboy-hoodie-black', null],
+    ['Jesus Was A Gym Rat Hoodie', 'hoodies', 2999, 0,
+      'Pullover fleece hoodie with front pouch pocket and a varsity-style "Jesus Was A Gym Rat" print.', 'gym-rat-hoodie-black', null],
+    ['ShopJesus Logo Hat', 'hats', 2499, 1,
+      'Structured cap with raised embroidered ShopJesus.com logo, red under-brim trim and adjustable fit.', 'hat-black', 'hat-white'],
+    ['ShopJesus Classic Polo', 'polos', 2999, 1,
+      'Breathable three-button polo with the ShopJesus.com logo embroidered on the left chest.', 'polo-black', null],
+    ['ShopJesus Red Trim Polo', 'polos', 2999, 0,
+      'Three-button polo with red collar trim and the ShopJesus.com logo embroidered on the left chest.', 'polo-red-trim-black', null],
+    ['ShopJesus Two-Pocket Work Shirt', 'buttondowns', 3999, 1,
+      'Short-sleeve button-up work shirt with two flap chest pockets and embroidered ShopJesus.com logo.', 'work-shirt-black', null],
+    ['ShopJesus Oxford Button-Down', 'buttondowns', 3999, 0,
+      'Short-sleeve button-down collar shirt with chest pocket and embroidered ShopJesus.com logo.', 'oxford-black', null],
   ];
-  const insP = db.prepare(`INSERT INTO products (slug,name,description,category,price_cents,design_text,featured)
-    VALUES (?,?,?,?,?,?,?)`);
+  const insP = db.prepare('INSERT INTO products (slug,name,description,category,price_cents,featured) VALUES (?,?,?,?,?,?)');
   const insV = db.prepare('INSERT INTO variants (product_id,color,color_hex,size,stock) VALUES (?,?,?,?,?)');
+  const insI = db.prepare('INSERT INTO product_images (product_id,color,image) VALUES (?,?,?)');
   db.transaction(() => {
-    for (const [name, cat, price, text, featured, colors, desc] of items) {
-      const { lastInsertRowid: pid } = insP.run(slugify(name), name, desc, cat, price, text, featured);
-      for (const [color, hex] of colors) {
+    for (const [name, cat, price, featured, desc, blackImg, whiteImg] of items) {
+      const { lastInsertRowid: pid } = insP.run(slugify(name), name, desc, cat, price, featured);
+      for (const [color, hex, img] of [['Black', BLACK, blackImg], ['White', WHITE, whiteImg]]) {
+        if (img) insI.run(pid, color, `/img/products/${img}.jpg`);
         for (const size of cat === 'hats' ? ['One Size'] : SIZES) insV.run(pid, color, hex, size, 25);
       }
     }

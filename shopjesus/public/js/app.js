@@ -9,6 +9,9 @@ document.querySelectorAll('select[data-autosubmit]').forEach(function (el) {
   if (!form) return;
   var variants = JSON.parse(form.dataset.variants);
   var img = document.getElementById('pdp-img');
+  var images = JSON.parse(img.dataset.images || '{}');
+  var shownIn = JSON.parse(img.dataset.shownIn || '{}');
+  var photoNote = document.getElementById('photo-note');
   var note = document.getElementById('stock-note');
   var btn = document.getElementById('add-btn');
   var colorName = document.getElementById('color-name');
@@ -21,7 +24,10 @@ document.querySelectorAll('select[data-autosubmit]').forEach(function (el) {
     var color = checked('color');
     if (!color) return;
     colorName.textContent = color.value;
-    if (img.dataset.base) img.src = img.dataset.base + '?c=' + color.dataset.hex.replace('#', '');
+    if (images[color.value]) img.src = images[color.value];
+    var other = shownIn[color.value];
+    photoNote.hidden = !other;
+    photoNote.textContent = other ? 'Photo shows ' + other + '. Your item will be ' + color.value + '.' : '';
     form.querySelectorAll('input[name="size"]').forEach(function (input) {
       var v = find(color.value, input.value);
       input.disabled = !v || v.stock <= 0;

@@ -11,7 +11,7 @@ const config = {
 };
 
 const CATEGORIES = { tshirts: 'T-Shirts', hoodies: 'Hoodies', hats: 'Hats', polos: 'Polos', buttondowns: 'Button-Downs' };
-const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'One Size'];
+const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', 'One Size'];
 
 function money(cents) {
   return '$' + (cents / 100).toFixed(2);
@@ -27,8 +27,24 @@ function sortSizes(a, b) {
   return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
 }
 
-function productImage(p, hex) {
-  if (p.image) return '/uploads/' + p.image;
+/** Stored images are either a site path (bundled photos) or a filename in the uploads folder. */
+function imageUrl(image) {
+  return image.startsWith('/') ? image : '/uploads/' + image;
+}
+
+const colorImageQ = db.prepare('SELECT image FROM product_images WHERE product_id = ? AND color = ?');
+const firstImageQ = db.prepare(`SELECT pi.image, pi.color FROM product_images pi
+  LEFT JOIN variants v ON v.product_id = pi.product_id AND v.color = pi.color
+  WHERE pi.product_id = ? ORDER BY v.id LIMIT 1`);
+
+/** Best image for a product: the photo for that color, else the general photo, else another color's photo, else a drawn mock-up. */
+function productImage(p, hex, color) {
+  const pid = p.product_id || p.id;
+  const byColor = color && colorImageQ.get(pid, color);
+  if (byColor) return imageUrl(byColor.image);
+  if (p.image) return imageUrl(p.image);
+  const any = firstImageQ.get(pid);
+  if (any) return imageUrl(any.image);
   return `/img/p/${p.slug}.svg` + (hex ? '?c=' + encodeURIComponent(hex.replace('#', '')) : '');
 }
 
@@ -52,7 +68,7 @@ function loadCart(req) {
       qty = row.stock;
       notices.push(`Only ${row.stock} left of ${row.name} (${row.color} / ${row.size}); quantity updated.`);
     }
-    lines.push({ ...row, qty, line_cents: qty * row.price_cents, img: productImage(row, row.color_hex) });
+    lines.push({ ...row, qty, line_cents: qty * row.price_cents, img: productImage(row, row.color_hex, row.color) });
   }
   req.session.cart = lines.map((l) => ({ v: l.variant_id, q: l.qty }));
   const subtotal = lines.reduce((s, l) => s + l.line_cents, 0);
@@ -125,4 +141,4 @@ function productSvg(category, hex, text) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img"><rect width="400" height="400" fill="#efefed"/>${art}</svg>`;
 }
 
-module.exports = { config, CATEGORIES, money, shippingFor, sortSizes, productImage, loadCart, productSvg, esc };
+module.exports = { config, CATEGORIES, money, shippingFor, sortSizes, productImage, imageUrl, colorImageQ, firstImageQ, loadCart, productSvg, esc };

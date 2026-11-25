@@ -14,12 +14,25 @@
       <label>Price (USD)<input name="price" type="number" step="0.01" min="0" value="<%= product.price_cents != null ? (product.price_cents / 100).toFixed(2) : '' %>" required></label>
     </div>
     <label>Description<textarea name="description" rows="4"><%= product.description || '' %></textarea></label>
-    <label>Photo (JPG, PNG or WebP, up to 6 MB)<input type="file" name="image" accept="image/jpeg,image/png,image/webp"></label>
+    <% if (colors.length) { %>
+    <h3>Photos by color</h3>
+    <p class="hint">JPG, PNG or WebP, up to 6 MB each. Shoppers see the photo for the color they pick.</p>
+    <% colors.forEach((c, i) => { %>
+    <div class="color-photo">
+      <% if (c.url) { %><img class="thumb" src="<%= c.url %>" alt=""><% } else { %><span class="thumb"></span><% } %>
+      <label><span class="dots"><i style="background:<%= c.color_hex %>"></i></span> <%= c.color %>
+        <input type="hidden" name="cimg_color[<%= i %>]" value="<%= c.color %>">
+        <input type="file" name="cimg_<%= i %>" accept="image/jpeg,image/png,image/webp"></label>
+      <% if (c.url) { %><label class="check"><input type="checkbox" name="cimg_remove[<%= i %>]" value="1"> Remove</label><% } %>
+    </div>
+    <% }) %>
+    <% } else { %><p class="hint">Save the product with its colors first, then add a photo for each color.</p><% } %>
+    <label>General photo (used for any color without its own)<input type="file" name="image" accept="image/jpeg,image/png,image/webp"></label>
     <% if (product.image) { %>
-      <p><img class="thumb-lg" src="/uploads/<%= product.image %>" alt=""></p>
-      <label class="check"><input type="checkbox" name="remove_image" value="1"> Remove photo</label>
+      <p><img class="thumb-lg" src="<%= product.image.startsWith('/') ? product.image : '/uploads/' + product.image %>" alt=""></p>
+      <label class="check"><input type="checkbox" name="remove_image" value="1"> Remove general photo</label>
     <% } %>
-    <label>Placeholder print text (shown on the mock-up until a photo is uploaded)<input name="design_text" value="<%= product.design_text || '' %>" maxlength="40"></label>
+    <label>Mock-up text (only shown if there is no photo)<input name="design_text" value="<%= product.design_text || '' %>" maxlength="40"></label>
     <label class="check"><input type="checkbox" name="active" value="1" <%= product.active ? 'checked' : '' %>> Visible in the store</label>
     <label class="check"><input type="checkbox" name="featured" value="1" <%= product.featured ? 'checked' : '' %>> Featured on the home page</label>
 

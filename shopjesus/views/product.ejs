@@ -3,8 +3,9 @@
   <p class="crumbs"><a href="/shop">Shop</a> / <a href="/shop?category=<%= product.category %>"><%= CATEGORIES[product.category] %></a></p>
   <div class="pdp">
     <div class="pdp-img">
-      <img id="pdp-img" src="<%= productImage(product, (firstInStock || variants[0] || {}).color_hex) %>" alt="<%= product.name %>" width="400" height="400"
-        data-base="<%= product.image ? '' : '/img/p/' + product.slug + '.svg' %>">
+      <img id="pdp-img" src="<%= colorImages[(firstInStock || variants[0] || {}).color] || productImage(product) %>" alt="<%= product.name %>" width="1000" height="1000"
+        data-images="<%= JSON.stringify(colorImages) %>" data-shown-in="<%= JSON.stringify(shownIn) %>">
+      <p class="photo-note" id="photo-note" hidden></p>
     </div>
     <div class="pdp-info">
       <h1><%= product.name %></h1>

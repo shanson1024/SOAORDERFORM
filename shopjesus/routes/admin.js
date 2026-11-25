@@ -5,7 +5,7 @@ const fs = require('fs');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
 const { db, slugify, UPLOAD_DIR } = require('../lib/db');
-const { CATEGORIES } = require('../lib/helpers');
+const { CATEGORIES, imageUrl } = require('../lib/helpers');
 const { getOrder, markShipped } = require('../lib/orders');
 
 const router = express.Router();
@@ -16,7 +16,7 @@ const upload = multer({
     destination: UPLOAD_DIR,
     filename: (req, file, cb) => cb(null, crypto.randomBytes(12).toString('hex') + IMAGE_TYPES[file.mimetype]),
   }),
-  limits: { fileSize: 6 * 1024 * 1024, files: 1 },
+  limits: { fileSize: 6 * 1024 * 1024, files: 12 },
   fileFilter: (req, file, cb) => cb(null, !!IMAGE_TYPES[file.mimetype]),
 });
 
@@ -118,14 +118,18 @@ router.get('/products', (req, res) => {
 });
 
 router.get('/products/new', (req, res) => {
-  res.render('admin/product-form', { title: 'New Product', product: { active: 1, category: 'tshirts' }, variants: [] });
+  res.render('admin/product-form', { title: 'New Product', product: { active: 1, category: 'tshirts' }, variants: [], colors: [] });
 });
 
 router.get('/products/:id', (req, res, next) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) return next();
   const variants = db.prepare('SELECT * FROM variants WHERE product_id = ? ORDER BY id').all(product.id);
-  res.render('admin/product-form', { title: 'Edit ' + product.name, product, variants });
+  const colors = db.prepare(`SELECT v.color, v.color_hex, pi.image FROM variants v
+    LEFT JOIN product_images pi ON pi.product_id = v.product_id AND pi.color = v.color
+    WHERE v.product_id = ? GROUP BY v.color ORDER BY MIN(v.id)`).all(product.id);
+  for (const c of colors) c.url = c.image ? imageUrl(c.image) : null;
+  res.render('admin/product-form', { title: 'Edit ' + product.name, product, variants, colors });
 });
 
 function uniqueSlug(base, ignoreId) {
@@ -144,7 +148,10 @@ function saveProduct(req, res, next) {
   const name = String(b.name || '').trim().slice(0, 120);
   const price = Math.round(parseFloat(b.price) * 100);
   const category = CATEGORIES[b.category] ? b.category : null;
-  const discardUpload = () => req.file && fs.unlink(req.file.path, () => {});
+  const files = req.files || [];
+  const mainFile = files.find((f) => f.fieldname === 'image');
+  const removeFile = (image) => image && !image.startsWith('/') && fs.unlink(path.join(UPLOAD_DIR, path.basename(image)), () => {});
+  const discardUpload = () => files.forEach((f) => fs.unlink(f.path, () => {}));
   if (!name || !category || !Number.isFinite(price) || price < 0) {
     discardUpload();
     req.session.flash = { type: 'error', text: 'Name, category and a valid price are required.' };
@@ -158,9 +165,10 @@ function saveProduct(req, res, next) {
     design_text: String(b.design_text || '').trim().slice(0, 40),
     featured: b.featured ? 1 : 0,
     active: b.active ? 1 : 0,
-    image: req.file ? req.file.filename : b.remove_image ? null : existing ? existing.image : null,
+    image: mainFile ? mainFile.filename : b.remove_image ? null : existing ? existing.image : null,
   };
 
+  const stale = [];
   const productId = db.transaction(() => {
     let pid = id;
     if (id) {
@@ -187,17 +195,30 @@ function saveProduct(req, res, next) {
     const initial = Math.max(0, parseInt(b.new_stock, 10) || 0);
     const ins = db.prepare('INSERT OR IGNORE INTO variants (product_id, color, color_hex, size, stock) VALUES (?,?,?,?,?)');
     for (const [color, hex] of colors) for (const size of sizes) ins.run(pid, color, hex, size, initial);
+    // Per-color photos: replace, remove, and clean up photos for colors that no longer exist.
+    const getImg = db.prepare('SELECT image FROM product_images WHERE product_id = ? AND color = ?');
+    const delImg = db.prepare('DELETE FROM product_images WHERE product_id = ? AND color = ?');
+    const putImg = db.prepare('INSERT OR REPLACE INTO product_images (product_id, color, image) VALUES (?,?,?)');
+    for (const [i, color] of Object.entries(b.cimg_color || {})) {
+      const file = files.find((f) => f.fieldname === 'cimg_' + i);
+      const old = getImg.get(pid, color);
+      if (file) { putImg.run(pid, color, file.filename); stale.push(old && old.image); }
+      else if (b.cimg_remove && b.cimg_remove[i] && old) { delImg.run(pid, color); stale.push(old.image); }
+    }
+    for (const row of db.prepare(`SELECT color, image FROM product_images WHERE product_id = ?
+        AND color NOT IN (SELECT color FROM variants WHERE product_id = ?)`).all(pid, pid)) {
+      delImg.run(pid, row.color); stale.push(row.image);
+    }
     return pid;
   })();
+  stale.forEach(removeFile);
 
-  if (existing && existing.image && existing.image !== fields.image) {
-    fs.unlink(path.join(UPLOAD_DIR, path.basename(existing.image)), () => {});
-  }
+  if (existing && existing.image !== fields.image) removeFile(existing.image);
   req.session.flash = { type: 'ok', text: 'Product saved.' };
   res.redirect('/admin/products/' + productId);
 }
 
-router.post('/products/new', upload.single('image'), saveProduct);
-router.post('/products/:id', upload.single('image'), saveProduct);
+router.post('/products/new', upload.any(), saveProduct);
+router.post('/products/:id', upload.any(), saveProduct);
 
 module.exports = router;
