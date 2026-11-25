@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS product_images (
   image TEXT NOT NULL,
   PRIMARY KEY (product_id, color)
 );
+CREATE TABLE IF NOT EXISTS seeded (slug TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   number TEXT UNIQUE,
@@ -80,8 +81,9 @@ const WHITE = '#f4f4f2';
 
 // Starting catalog: [name, category, price, featured, description, black photo, white photo].
 // Every item comes in Black and White. Edit everything in the admin afterwards.
+// Each item is added once (tracked in the seeded table), so new entries here reach an existing store
+// without bringing back anything that was later renamed or hidden in the admin.
 function seed() {
-  if (db.prepare('SELECT COUNT(*) n FROM products').get().n > 0) return;
   const items = [
     ['ShopJesus Logo Tee', 'tshirts', 1999, 1,
       'Classic crew neck tee with the ShopJesus.com logo printed big across the chest.', 'tee-black', 'tee-white'],
@@ -101,6 +103,10 @@ function seed() {
       'Breathable three-button polo with the ShopJesus.com logo embroidered on the left chest.', 'polo-black', null],
     ['ShopJesus Red Trim Polo', 'polos', 2999, 0,
       'Three-button polo with red collar trim and the ShopJesus.com logo embroidered on the left chest.', 'polo-red-trim-black', null],
+    ['Saved Polo', 'polos', 2999, 1,
+      'Three-button polo with "Saved" embroidered on the left chest in raised varsity lettering.', 'saved-polo-black', null],
+    ['Faith Polo', 'polos', 2999, 1,
+      'Three-button polo with "Faith" embroidered on the left chest.', 'faith-polo-black', null],
     ['ShopJesus Two-Pocket Work Shirt', 'buttondowns', 3999, 1,
       'Short-sleeve button-up work shirt with two flap chest pockets and embroidered ShopJesus.com logo.', 'work-shirt-black', null],
     ['ShopJesus Oxford Button-Down', 'buttondowns', 3999, 0,
@@ -108,10 +114,17 @@ function seed() {
   ];
   const insP = db.prepare('INSERT INTO products (slug,name,description,category,price_cents,featured) VALUES (?,?,?,?,?,?)');
   const insV = db.prepare('INSERT INTO variants (product_id,color,color_hex,size,stock) VALUES (?,?,?,?,?)');
+  const wasSeeded = db.prepare('SELECT 1 FROM seeded WHERE slug = ?');
+  const markSeeded = db.prepare('INSERT OR IGNORE INTO seeded (slug) VALUES (?)');
+  const exists = db.prepare('SELECT 1 FROM products WHERE slug = ?');
   const insI = db.prepare('INSERT INTO product_images (product_id,color,image) VALUES (?,?,?)');
   db.transaction(() => {
     for (const [name, cat, price, featured, desc, blackImg, whiteImg] of items) {
-      const { lastInsertRowid: pid } = insP.run(slugify(name), name, desc, cat, price, featured);
+      const slug = slugify(name);
+      if (wasSeeded.get(slug)) continue;
+      markSeeded.run(slug);
+      if (exists.get(slug)) continue;
+      const { lastInsertRowid: pid } = insP.run(slug, name, desc, cat, price, featured);
       for (const [color, hex, img] of [['Black', BLACK, blackImg], ['White', WHITE, whiteImg]]) {
         if (img) insI.run(pid, color, `/img/products/${img}.jpg`);
         for (const size of cat === 'hats' ? ['One Size'] : SIZES) insV.run(pid, color, hex, size, 25);
